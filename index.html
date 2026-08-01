@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crypto — 3m Box Heatmap (UTC)</title>
+<style>
+  :root{
+    --bg:#0a0e14;
+    --panel:#0d1219;
+    --panel2:#141b24;
+    --border:#1c232c;
+    --text:#e7ecf1;
+    --muted:#7c8a9a;
+    --green:#0ecb81;
+    --red:#f6465d;
+    --amber:#f0b90b;
+  }
+  *{ box-sizing:border-box; }
+  html,body{
+    margin:0; padding:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  .app{ max-width:1200px; margin:0 auto; padding:0 0 24px; }
+
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 24px; border-bottom:1px solid var(--border);
+    flex-wrap:wrap; gap:12px;
+  }
+  .title-block h1{ margin:0; font-size:21px; font-weight:700; letter-spacing:-0.02em; }
+  .title-block h1 span{ color:var(--muted); font-weight:500; }
+  .title-block .subtitle{ color:var(--muted); font-size:12px; margin-top:3px; }
+
+  .stats{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  .price{
+    font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+    font-size:23px; font-weight:600; min-width:110px;
+  }
+  .change{
+    font-family:"SFMono-Regular",Consolas,monospace;
+    font-size:13px; font-weight:600; padding:4px 9px; border-radius:5px;
+    background:rgba(255,255,255,0.04);
+  }
+  .change.up{ color:var(--green); }
+  .change.down{ color:var(--red); }
+  .range{ font-family:"SFMono-Regular",Consolas,monospace; font-size:11px; color:var(--muted); }
+
+  .status{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted); }
+  .dot{ width:8px; height:8px; border-radius:50%; background:var(--muted); flex-shrink:0; }
+  .dot.live{ background:var(--green); animation:pulse 1.8s infinite; }
+  .dot.warn{ background:var(--amber); }
+  .dot.down{ background:var(--red); }
+  @keyframes pulse{
+    0%{ box-shadow:0 0 0 0 rgba(14,203,129,0.55); }
+    70%{ box-shadow:0 0 0 6px rgba(14,203,129,0); }
+    100%{ box-shadow:0 0 0 0 rgba(14,203,129,0); }
+  }
+
+  .jump-btn{
+    font-size:11px; color:var(--muted); background:var(--panel2);
+    border:1px solid var(--border); border-radius:5px; padding:5px 10px;
+    cursor:pointer; transition:border-color .15s, color .15s;
+  }
+  .jump-btn:hover{ border-color:#33404d; color:var(--text); }
+
+  .coin-bar{
+    display:flex; align-items:center; gap:8px; padding:14px 24px 0;
+    flex-wrap:wrap;
+  }
+  .coin-search{
+    background:var(--panel2); border:1px solid var(--border); border-radius:6px;
+    color:var(--text); font-size:12px; padding:7px 10px; width:150px;
+    font-family:inherit; outline:none; transition:border-color .15s;
+  }
+  .coin-search:focus{ border-color:#33404d; }
+  .coin-search::placeholder{ color:var(--muted); }
+  .coin-tabs{
+    display:flex; align-items:center; gap:6px; flex-wrap:wrap; max-height:150px;
+    overflow-y:auto; padding:2px 0;
+  }
+  .coin-tab{
+    font-size:12px; font-weight:600; color:var(--muted); background:var(--panel2);
+    border:1px solid var(--border); border-radius:6px; padding:6px 12px;
+    cursor:pointer; transition:border-color .15s, color .15s, background .15s;
+    font-family:"SFMono-Regular",Consolas,monospace; white-space:nowrap;
+  }
+  .coin-tab:hover{ border-color:#33404d; color:var(--text); }
+  .coin-tab.active{ background:rgba(14,203,129,0.12); border-color:var(--green); color:var(--green); }
+  .coin-count{ color:var(--muted); font-size:11px; margin-left:4px; }
+  .coin-select-mobile{ display:none; }
+
+  .legend{ display:flex; align-items:center; gap:10px; padding:12px 24px; color:var(--muted); font-size:11px; flex-wrap:wrap; }
+  .legend-bar{
+    width:130px; height:7px; border-radius:4px;
+    background:linear-gradient(to right, hsl(351,72%,56%), hsl(351,72%,14%) 42%, #11161d 50%, hsl(152,65%,14%) 58%, hsl(152,65%,56%));
+  }
+  .legend-swatch{ width:12px; height:12px; border-radius:3px; background:#10151c; border:1px dashed #232c36; display:inline-block; vertical-align:-2px; }
+
+  .heatmap-wrap{
+    margin:6px 24px 4px; border:1px solid var(--border); border-radius:8px;
+    background:var(--panel); padding:16px; overflow-x:auto;
+  }
+  .heatmap{
+    display:grid;
+    grid-template-columns: 52px repeat(20, minmax(26px, 1fr));
+    grid-template-rows: 18px repeat(24, 26px);
+    gap:3px;
+    min-width:780px;
+  }
+  .col-head{ font:10px/18px monospace; color:var(--muted); text-align:center; }
+  .row-head{
+    font:10px monospace; color:var(--muted);
+    display:flex; align-items:center; justify-content:flex-end; padding-right:6px;
+  }
+  .cell{
+    border-radius:4px; background:#12181f; cursor:pointer;
+    transition:transform .08s ease, box-shadow .08s ease;
+    position:relative;
+  }
+  .cell.future{ background:#10151c; border:1px dashed #212a34; }
+  .cell.hovered{ transform:scale(1.2); z-index:5; box-shadow:0 0 0 2px #ffffff; }
+  .cell.current{ box-shadow:0 0 0 2px var(--amber); animation:cellpulse 1.6s infinite; }
+  @keyframes cellpulse{
+    0%{ box-shadow:0 0 0 2px rgba(240,185,11,0.9); }
+    70%{ box-shadow:0 0 0 5px rgba(240,185,11,0); }
+    100%{ box-shadow:0 0 0 0 rgba(240,185,11,0); }
+  }
+
+  .hint{ padding:0 24px; margin-top:12px; color:var(--muted); font-size:11px; }
+
+  .tooltip{
+    display:none; position:fixed; z-index:50; pointer-events:none;
+    background:#131922; border:1px solid #2a333d; border-radius:7px;
+    padding:10px 13px; font-family:"SFMono-Regular",Consolas,monospace;
+    font-size:12px; box-shadow:0 8px 24px rgba(0,0,0,0.45); min-width:150px;
+  }
+  .tt-time{ color:var(--muted); font-size:10.5px; margin-bottom:7px; border-bottom:1px solid var(--border); padding-bottom:6px; }
+  .tt-row{ display:flex; justify-content:space-between; gap:16px; padding:1px 0; color:#c7d0da; }
+  .tt-row span{ color:var(--muted); }
+  .tt-pct{ margin-top:6px; padding-top:6px; border-top:1px solid var(--border); font-weight:700; text-align:right; }
+  .tt-pct.up{ color:var(--green); }
+  .tt-pct.down{ color:var(--red); }
+
+  @media (max-width: 520px){
+    .coin-bar{ flex-direction:column; align-items:stretch; }
+    .coin-search{ width:100%; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="title-block">
+      <h1>BTC<span>/USDT</span></h1>
+      <div class="subtitle">3‑min box grid · today, UTC 00:00 → 24:00 · 480 boxes (24 × 20)</div>
+    </div>
+    <div class="stats">
+      <div class="price" id="livePrice">--</div>
+      <div class="change" id="dayChange">--</div>
+      <div class="range" id="dayRange">Range --</div>
+      <button class="jump-btn" id="jumpNow">Jump to current box</button>
+      <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">Connecting…</span></div>
+    </div>
+  </header>
+
+  <div class="coin-bar">
+    <input type="text" class="coin-search" id="coinSearch" placeholder="Search coin…" autocomplete="off">
+    <div class="coin-tabs" id="coinTabs"></div>
+    <span class="coin-count" id="coinCount"></span>
+  </div>
+
+  <div class="legend">
+    <span>Down</span>
+    <div class="legend-bar"></div>
+    <span>Up</span>
+    <span style="margin-left:10px;"><span class="legend-swatch"></span> not started yet</span>
+    <span style="margin-left:6px;">— color intensity = size of that 3‑min move</span>
+  </div>
+
+  <div class="heatmap-wrap">
+    <div class="heatmap" id="heatmapGrid"></div>
+  </div>
+  <div class="hint">Rows = UTC hour, columns = minute within the hour (00,03,…,57). Hover a box for its exact OHLC + volume. Boxes fill in live as the day progresses.</div>
+</div>
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+(function(){
+  let SYMBOL = 'btcusdt';
+  const INTERVAL = '3m';
+  const INTERVAL_MS = 3 * 60 * 1000;
+  const SLOTS = (24*60)/3; // 480
+  const ROWS = 24, COLS = 20;
+
+  let dayStartUTC = utcDayStartMs();
+  let candles = new Array(SLOTS).fill(null);
+  let maxAbsPct = 0.03;
+  let cellEls = [];
+  let ws = null, reconnectAttempts = 0, pollTimer = null;
+  let allSymbols = [];       // all USDT pairs from Binance exchangeInfo
+  let loadToken = 0;         // guards against stale async loads when switching coins fast
+
+  const grid = document.getElementById('heatmapGrid');
+  const tooltip = document.getElementById('tooltip');
+  const livePriceEl = document.getElementById('livePrice');
+  const dayChangeEl = document.getElementById('dayChange');
+  const dayRangeEl = document.getElementById('dayRange');
+  const statusDot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  const jumpBtn = document.getElementById('jumpNow');
+  const titleH1 = document.querySelector('.title-block h1');
+  const subtitleEl = document.querySelector('.title-block .subtitle');
+  const coinTabsEl = document.getElementById('coinTabs');
+  const coinSearchEl = document.getElementById('coinSearch');
+  const coinCountEl = document.getElementById('coinCount');
+
+  function utcDayStartMs(){
+    const iso = new Date().toISOString().slice(0,10);
+    return Date.parse(iso + 'T00:00:00.000Z');
+  }
+  function fmtPrice(n){
+    return n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function fmtUTC(ms){
+    const d = new Date(ms);
+    return String(d.getUTCHours()).padStart(2,'0') + ':' + String(d.getUTCMinutes()).padStart(2,'0') + ' UTC';
+  }
+  function currentSlotIndex(){
+    return Math.floor((Date.now() - dayStartUTC) / INTERVAL_MS);
+  }
+
+  function setHeaderForSymbol(sym){
+    const base = sym.replace(/usdt$/i, '').toUpperCase();
+    titleH1.innerHTML = `${base}<span>/USDT</span>`;
+    subtitleEl.textContent = '3‑min box grid · today, UTC 00:00 → 24:00 · 480 boxes (24 × 20)';
+  }
+
+  function renderCoinTabs(filter){
+    const f = (filter || '').trim().toUpperCase();
+    const list = f
+      ? allSymbols.filter(s => s.toUpperCase().replace('USDT','').includes(f))
+      : allSymbols;
+    coinTabsEl.innerHTML = list.map(s => {
+      const base = s.replace(/usdt$/i,'').toUpperCase();
+      const active = s === SYMBOL ? ' active' : '';
+      return `<button class="coin-tab${active}" data-sym="${s}">${base}</button>`;
+    }).join('');
+    coinCountEl.textContent = f
+      ? `${list.length} match${list.length===1?'':'es'}`
+      : `${allSymbols.length} pairs`;
+  }
+
+  coinTabsEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.coin-tab');
+    if(!btn) return;
+    const sym = btn.dataset.sym;
+    if(sym && sym !== SYMBOL) switchSymbol(sym);
+  });
+
+  let searchDebounce = null;
+  coinSearchEl.addEventListener('input', () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => renderCoinTabs(coinSearchEl.value), 120);
+  });
+
+  async function loadSymbolList(){
+    try{
+      const infoRes = await fetch('https://api.binance.com/api/v3/exchangeInfo');
+      const info = await infoRes.json();
+      const tradable = new Set(
+        info.symbols
+          .filter(s => s.status === 'TRADING' && s.quoteAsset === 'USDT' && s.isSpotTradingAllowed)
+          .map(s => s.symbol)
+      );
+
+      // Fetch 24h volume, sort major coins first, and drop anything below
+      // the minimum daily volume threshold (~36 Cr 90 Lakh INR / $44.4M USD).
+      const MIN_VOLUME_USDT = 44400000;
+      let volMap = null;
+      try{
+        const volRes = await fetch('https://api.binance.com/api/v3/ticker/24hr');
+        const volData = await volRes.json();
+        volMap = new Map(volData.map(t => [t.symbol, parseFloat(t.quoteVolume) || 0]));
+      }catch(e){
+        console.warn('24hr volume fetch failed, falling back to alphabetical order:', e);
+      }
+
+      let symbols = [...tradable];
+      if(volMap){
+        symbols = symbols.filter(s => (volMap.get(s) || 0) >= MIN_VOLUME_USDT);
+        symbols.sort((a,b) => (volMap.get(b)||0) - (volMap.get(a)||0));
+      } else {
+        symbols.sort();
+      }
+
+      allSymbols = symbols.map(s => s.toLowerCase());
+      if(!allSymbols.includes(SYMBOL) && allSymbols.length) SYMBOL = allSymbols[0];
+      renderCoinTabs('');
+    }catch(e){
+      console.error('Failed to load symbol list:', e);
+      coinCountEl.textContent = 'Symbol list unavailable';
+    }
+  }
+
+  async function switchSymbol(sym){
+    const myToken = ++loadToken;
+    SYMBOL = sym;
+    coinSearchEl.value = '';
+    renderCoinTabs('');
+    setHeaderForSymbol(SYMBOL);
+
+    // tear down existing connections
+    clearPoll();
+    reconnectAttempts = 0;
+    if(ws){
+      try{ ws.onclose = null; ws.onerror = null; ws.close(); }catch(e){}
+      ws = null;
+    }
+
+    setStatus('connecting');
+    livePriceEl.textContent = '--';
+    dayChangeEl.textContent = '--';
+    dayChangeEl.className = 'change';
+    dayRangeEl.textContent = 'Range --';
+
+    try{
+      await fetchHistory();
+      if(myToken !== loadToken) return; // a newer switch happened while we awaited
+      renderAll();
+      connectWS();
+    }catch(e){
+      if(myToken !== loadToken) return;
+      setStatus('disconnected');
+      console.error('Switch failed:', e);
+    }
+  }
+
+  function buildGrid(){
+    let html = '<div></div>';
+    for(let c=0;c<COLS;c++) html += `<div class="col-head">${String(c*3).padStart(2,'0')}</div>`;
+    for(let r=0;r<ROWS;r++){
+      html += `<div class="row-head">${String(r).padStart(2,'0')}:00</div>`;
+      for(let c=0;c<COLS;c++){
+        const idx = r*COLS + c;
+        html += `<div class="cell future" data-idx="${idx}"></div>`;
+      }
+    }
+    grid.innerHTML = html;
+    cellEls = Array.from(grid.querySelectorAll('.cell'));
+  }
+
+  function colorFor(open, close){
+    const pct = (close - open) / open * 100;
+    const t = Math.min(Math.abs(pct) / maxAbsPct, 1);
+    const light = 14 + t * 44;
+    return pct >= 0 ? `hsl(152,65%,${light}%)` : `hsl(351,72%,${light}%)`;
+  }
+
+  function renderAll(){
+    let lo = Infinity, hi = -Infinity, maxPct = 0.03;
+    for(const c of candles){
+      if(!c) continue;
+      if(c.low < lo) lo = c.low;
+      if(c.high > hi) hi = c.high;
+      const p = Math.abs((c.close - c.open) / c.open * 100);
+      if(p > maxPct) maxPct = p;
+    }
+    maxAbsPct = maxPct;
+    if(lo !== Infinity) dayRangeEl.textContent = `Range ${fmtPrice(lo)} – ${fmtPrice(hi)}`;
+
+    const nowSlot = currentSlotIndex();
+    for(let idx=0; idx<SLOTS; idx++){
+      const el = cellEls[idx];
+      const c = candles[idx];
+      el.classList.remove('current');
+      if(!c){
+        el.classList.add('future');
+        el.style.background = '';
+      } else {
+        el.classList.remove('future');
+        el.style.background = colorFor(c.open, c.close);
+        if(idx === nowSlot && c.isFinal === false) el.classList.add('current');
+      }
+    }
+  }
+
+  function showTooltip(clientX, clientY, html){
+    tooltip.innerHTML = html;
+    tooltip.style.display = 'block';
+    const ttW = 190, ttH = 150;
+    let left = clientX + 16, top = clientY + 16;
+    if(left + ttW > window.innerWidth) left = clientX - ttW - 16;
+    if(top + ttH > window.innerHeight) top = clientY - ttH - 16;
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
+  }
+  function hideTooltip(){ tooltip.style.display = 'none'; }
+
+  grid.addEventListener('mousemove', (e) => {
+    const cellEl = e.target.closest('.cell');
+    if(!cellEl){ hideTooltip(); return; }
+    const idx = +cellEl.dataset.idx;
+    const slotStart = dayStartUTC + idx * INTERVAL_MS;
+    const c = candles[idx];
+    if(c){
+      const pct = (c.close - c.open) / c.open * 100;
+      showTooltip(e.clientX, e.clientY, `
+        <div class="tt-time">${fmtUTC(slotStart)} → ${fmtUTC(slotStart+INTERVAL_MS)}${c.isFinal===false?' · live':''}</div>
+        <div class="tt-row"><span>O</span><b>${fmtPrice(c.open)}</b></div>
+        <div class="tt-row"><span>H</span><b>${fmtPrice(c.high)}</b></div>
+        <div class="tt-row"><span>L</span><b>${fmtPrice(c.low)}</b></div>
+        <div class="tt-row"><span>C</span><b>${fmtPrice(c.close)}</b></div>
+        <div class="tt-row"><span>Vol</span><b>${c.volume.toFixed(3)} BTC</b></div>
+        <div class="tt-pct ${pct>=0?'up':'down'}">${pct>=0?'+':''}${pct.toFixed(3)}%</div>
+      `);
+    } else {
+      showTooltip(e.clientX, e.clientY, `
+        <div class="tt-time">${fmtUTC(slotStart)} → ${fmtUTC(slotStart+INTERVAL_MS)}</div>
+        <div class="tt-row" style="color:var(--muted)">Not started yet</div>
+      `);
+    }
+  });
+  grid.addEventListener('mouseover', (e) => {
+    const cellEl = e.target.closest('.cell');
+    cellEls.forEach(el => el.classList.remove('hovered'));
+    if(cellEl) cellEl.classList.add('hovered');
+  });
+  grid.addEventListener('mouseleave', () => {
+    cellEls.forEach(el => el.classList.remove('hovered'));
+    hideTooltip();
+  });
+
+  jumpBtn.addEventListener('click', () => {
+    const idx = Math.min(currentSlotIndex(), SLOTS-1);
+    if(cellEls[idx]) cellEls[idx].scrollIntoView({behavior:'smooth', block:'center', inline:'center'});
+  });
+
+  function setStatus(state){
+    statusDot.className = 'dot';
+    if(state === 'live'){ statusDot.classList.add('live'); statusText.textContent = 'Live'; }
+    else if(state === 'reconnecting'){ statusDot.classList.add('warn'); statusText.textContent = 'Reconnecting…'; }
+    else if(state === 'polling'){ statusDot.classList.add('warn'); statusText.textContent = 'Live (fallback polling)'; }
+    else if(state === 'connecting'){ statusText.textContent = 'Connecting…'; }
+    else { statusDot.classList.add('down'); statusText.textContent = 'Disconnected'; }
+  }
+
+  function updateHeaderPrice(price){
+    livePriceEl.textContent = fmtPrice(price);
+    const firstFilled = candles.find(c => c);
+    if(firstFilled){
+      const pct = (price - firstFilled.open) / firstFilled.open * 100;
+      dayChangeEl.textContent = (pct>=0?'+':'') + pct.toFixed(2) + '% today';
+      dayChangeEl.className = 'change ' + (pct>=0?'up':'down');
+    }
+  }
+
+  async function fetchHistory(){
+    dayStartUTC = utcDayStartMs();
+    candles = new Array(SLOTS).fill(null);
+    const now = Date.now();
+    const endTime = Math.min(now, dayStartUTC + SLOTS*INTERVAL_MS - 1);
+    const url = `https://api.binance.com/api/v3/klines?symbol=${SYMBOL.toUpperCase()}&interval=${INTERVAL}&startTime=${dayStartUTC}&endTime=${endTime}&limit=500`;
+    const res = await fetch(url);
+    const data = await res.json();
+    data.forEach(d => {
+      const idx = Math.round((d[0] - dayStartUTC) / INTERVAL_MS);
+      if(idx >= 0 && idx < SLOTS){
+        candles[idx] = {
+          open:+d[1], high:+d[2], low:+d[3], close:+d[4], volume:+d[5],
+          isFinal: (d[0] + INTERVAL_MS) <= now
+        };
+      }
+    });
+    const lastFilled = [...candles].reverse().find(c => c);
+    if(lastFilled) updateHeaderPrice(lastFilled.close);
+  }
+
+  function handleKline(k){
+    const idx = Math.round((k.t - dayStartUTC) / INTERVAL_MS);
+    if(idx < 0 || idx >= SLOTS) return;
+    candles[idx] = { open:+k.o, high:+k.h, low:+k.l, close:+k.c, volume:+k.v, isFinal:k.x };
+    renderAll();
+  }
+  function handleTrade(t){ updateHeaderPrice(+t.p); }
+
+  function connectWS(){
+    setStatus('connecting');
+    const streams = `${SYMBOL}@kline_${INTERVAL}/${SYMBOL}@trade`;
+    ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
+    ws.onopen = () => { reconnectAttempts = 0; clearPoll(); setStatus('live'); };
+    ws.onmessage = (ev) => {
+      let msg;
+      try { msg = JSON.parse(ev.data); } catch(e){ return; }
+      if(!msg || !msg.stream) return;
+      if(msg.stream.endsWith('@kline_' + INTERVAL)) handleKline(msg.data.k);
+      else if(msg.stream.endsWith('@trade')) handleTrade(msg.data);
+    };
+    ws.onclose = () => { setStatus('reconnecting'); scheduleReconnect(); };
+    ws.onerror = () => { try{ ws.close(); }catch(e){} };
+  }
+  function scheduleReconnect(){
+    reconnectAttempts++;
+    if(reconnectAttempts > 3) startPoll();
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 15000);
+    setTimeout(connectWS, delay);
+  }
+  function startPoll(){
+    if(pollTimer) return;
+    setStatus('polling');
+    pollTimer = setInterval(async () => {
+      try{
+        const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${SYMBOL.toUpperCase()}&interval=${INTERVAL}&limit=2`);
+        const data = await res.json();
+        data.forEach(d => handleKline({ t:d[0], o:d[1], h:d[2], l:d[3], c:d[4], v:d[5], x:(d[0]+INTERVAL_MS)<=Date.now() }));
+        if(data.length) updateHeaderPrice(+data[data.length-1][4]);
+      }catch(e){}
+    }, 3000);
+  }
+  function clearPoll(){ if(pollTimer){ clearInterval(pollTimer); pollTimer = null; } }
+
+  // Handle UTC day rollover so the grid resets at 00:00 UTC automatically
+  setInterval(async () => {
+    const nd = utcDayStartMs();
+    const myToken = loadToken;
+    if(nd !== dayStartUTC){
+      await fetchHistory();
+      if(myToken !== loadToken) return; // a coin switch happened meanwhile
+      renderAll();
+    }
+    else { renderAll(); } // keep "current" box marker accurate as minutes tick over
+  }, 15000);
+
+  (async function init(){
+    try{
+      buildGrid();
+      setHeaderForSymbol(SYMBOL);
+      renderCoinTabs(''); // show BTC immediately, before full list arrives
+      await fetchHistory();
+      renderAll();
+      connectWS();
+      loadSymbolList(); // populate full tradable-pair list in the background
+    }catch(e){
+      setStatus('disconnected');
+      console.error('Init failed:', e);
+    }
+  })();
+})();
+</script>
+</body>
+</html>
