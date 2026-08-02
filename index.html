@@ -156,12 +156,14 @@
       <div class="subtitle">3‑min box grid · today, UTC 00:00 → 24:00 · 480 boxes (24 × 20)</div>
     </div>
     <div class="stats">
-      <div class="price" id="livePrice">--</div>
-      <div class="change" id="dayChange">--</div>
-      <div class="range" id="dayRange">Range --</div>
-      <button class="jump-btn" id="jumpNow">Jump to current box</button>
-      <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">Connecting…</span></div>
-    </div>
+          <div class="price" id="livePrice">--</div>
+          <div class="change" id="dayChange">--</div>
+          <div class="range" id="dayRange">Range --</div>
+          <input type="date" id="dayPicker" class="jump-btn" style="font-family:inherit; color-scheme:dark;">
+          <button class="jump-btn" id="jumpToday">Today</button>
+          <button class="jump-btn" id="jumpNow">Jump to current box</button>
+          <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">Connecting…</span></div>
+        </div>
   </header>
 
   <div class="coin-bar">
@@ -188,13 +190,15 @@
 <script>
 (function(){
   let SYMBOL = 'btcusdt';
-  const INTERVAL = '3m';
-  const INTERVAL_MS = 3 * 60 * 1000;
-  const SLOTS = (24*60)/3; // 480
-  const ROWS = 24, COLS = 20;
-
-  let dayStartUTC = utcDayStartMs();
-  let candles = new Array(SLOTS).fill(null);
+    const INTERVAL = '3m';
+    const INTERVAL_MS = 3 * 60 * 1000;
+    const SLOTS = (24*60)/3; // 480
+    const ROWS = 24, COLS = 20;
+  
+    let viewDateStr = todayUTCStr();     // 'YYYY-MM-DD' currently being viewed
+    let isLiveDay = true;                // true when viewDateStr === today (UTC)
+    let dayStartUTC = utcDayStartMs(viewDateStr);
+    let candles = new Array(SLOTS).fill(null);
   let maxAbsPct = 0.03;
   let cellEls = [];
   let ws = null, reconnectAttempts = 0, pollTimer = null;
@@ -212,13 +216,22 @@
   const titleH1 = document.querySelector('.title-block h1');
   const subtitleEl = document.querySelector('.title-block .subtitle');
   const coinTabsEl = document.getElementById('coinTabs');
-  const coinSearchEl = document.getElementById('coinSearch');
-  const coinCountEl = document.getElementById('coinCount');
-
-  function utcDayStartMs(){
-    const iso = new Date().toISOString().slice(0,10);
-    return Date.parse(iso + 'T00:00:00.000Z');
-  }
+    const coinSearchEl = document.getElementById('coinSearch');
+    const coinCountEl = document.getElementById('coinCount');
+    const dayPickerEl = document.getElementById('dayPicker');
+    const jumpTodayBtn = document.getElementById('jumpToday');
+  
+    function todayUTCStr(){
+      return new Date().toISOString().slice(0,10);
+    }
+    function utcDayStartMs(dateStr){
+      const iso = dateStr || todayUTCStr();
+      return Date.parse(iso + 'T00:00:00.000Z');
+    }
+    function updateSubtitleForDate(){
+      const label = isLiveDay ? 'today' : viewDateStr;
+      subtitleEl.textContent = `3‑min box grid · ${label}, UTC 00:00 → 24:00 · 480 boxes (24 × 20)`;
+    }
   function fmtPrice(n){
     return n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
   }
@@ -231,10 +244,10 @@
   }
 
   function setHeaderForSymbol(sym){
-    const base = sym.replace(/usdt$/i, '').toUpperCase();
-    titleH1.innerHTML = `${base}<span>/USDT</span>`;
-    subtitleEl.textContent = '3‑min box grid · today, UTC 00:00 → 24:00 · 480 boxes (24 × 20)';
-  }
+      const base = sym.replace(/usdt$/i, '').toUpperCase();
+      titleH1.innerHTML = `${base}<span>/USDT</span>`;
+      updateSubtitleForDate();
+    }
 
   function renderCoinTabs(filter){
     const f = (filter || '').trim().toUpperCase();
@@ -275,8 +288,8 @@
       );
 
       // Fetch 24h volume, sort major coins first, and drop anything below
-      // the minimum daily volume threshold (~36 Cr 90 Lakh INR / $44.4M USD).
-      const MIN_VOLUME_USDT = 44400000;
+            // the minimum daily volume threshold (~10 Cr INR / $1.2M USD).
+            const MIN_VOLUME_USDT = 1200000;
       let volMap = null;
       try{
         const volRes = await fetch('https://api.binance.com/api/v3/ticker/24hr');
@@ -304,37 +317,88 @@
   }
 
   async function switchSymbol(sym){
-    const myToken = ++loadToken;
-    SYMBOL = sym;
-    coinSearchEl.value = '';
-    renderCoinTabs('');
-    setHeaderForSymbol(SYMBOL);
-
-    // tear down existing connections
-    clearPoll();
-    reconnectAttempts = 0;
-    if(ws){
-      try{ ws.onclose = null; ws.onerror = null; ws.close(); }catch(e){}
-      ws = null;
+      const myToken = ++loadToken;
+      SYMBOL = sym;
+      coinSearchEl.value = '';
+      renderCoinTabs('');
+      setHeaderForSymbol(SYMBOL);
+  
+      // tear down existing connections
+      clearPoll();
+      reconnectAttempts = 0;
+      if(ws){
+        try{ ws.onclose = null; ws.onerror = null; ws.close(); }catch(e){}
+        ws = null;
+      }
+  
+      setStatus('connecting');
+      livePriceEl.textContent = '--';
+      dayChangeEl.textContent = '--';
+      dayChangeEl.className = 'change';
+      dayRangeEl.textContent = 'Range --';
+  
+      try{
+        await fetchHistory();
+        if(myToken !== loadToken) return; // a newer switch happened while we awaited
+        renderAll();
+        if(isLiveDay){
+          connectWS();
+        } else {
+          statusDot.className = 'dot';
+          statusText.textContent = 'Viewing past day (static)';
+        }
+      }catch(e){
+        if(myToken !== loadToken) return;
+        setStatus('disconnected');
+        console.error('Switch failed:', e);
+      }
     }
-
-    setStatus('connecting');
-    livePriceEl.textContent = '--';
-    dayChangeEl.textContent = '--';
-    dayChangeEl.className = 'change';
-    dayRangeEl.textContent = 'Range --';
-
-    try{
-      await fetchHistory();
-      if(myToken !== loadToken) return; // a newer switch happened while we awaited
-      renderAll();
-      connectWS();
-    }catch(e){
-      if(myToken !== loadToken) return;
-      setStatus('disconnected');
-      console.error('Switch failed:', e);
+  
+    async function switchDate(dateStr){
+      const myToken = ++loadToken;
+      viewDateStr = dateStr;
+      isLiveDay = (viewDateStr === todayUTCStr());
+      dayPickerEl.value = viewDateStr;
+      updateSubtitleForDate();
+  
+      clearPoll();
+      reconnectAttempts = 0;
+      if(ws){
+        try{ ws.onclose = null; ws.onerror = null; ws.close(); }catch(e){}
+        ws = null;
+      }
+  
+      setStatus('connecting');
+      dayChangeEl.textContent = '--';
+      dayChangeEl.className = 'change';
+      dayRangeEl.textContent = 'Range --';
+      jumpBtn.style.display = isLiveDay ? '' : 'none';
+  
+      try{
+        await fetchHistory();
+        if(myToken !== loadToken) return;
+        renderAll();
+        if(isLiveDay){
+          connectWS();
+        } else {
+          statusDot.className = 'dot';
+          statusText.textContent = 'Viewing past day (static)';
+          const lastFilled = [...candles].reverse().find(c => c);
+          if(lastFilled) livePriceEl.textContent = fmtPrice(lastFilled.close);
+        }
+      }catch(e){
+        if(myToken !== loadToken) return;
+        setStatus('disconnected');
+        console.error('Date switch failed:', e);
+      }
     }
-  }
+  
+    dayPickerEl.addEventListener('change', () => {
+      if(dayPickerEl.value) switchDate(dayPickerEl.value);
+    });
+    jumpTodayBtn.addEventListener('click', () => {
+      if(!isLiveDay) switchDate(todayUTCStr());
+    });
 
   function buildGrid(){
     let html = '<div></div>';
@@ -456,25 +520,27 @@
   }
 
   async function fetchHistory(){
-    dayStartUTC = utcDayStartMs();
-    candles = new Array(SLOTS).fill(null);
-    const now = Date.now();
-    const endTime = Math.min(now, dayStartUTC + SLOTS*INTERVAL_MS - 1);
-    const url = `https://api.binance.com/api/v3/klines?symbol=${SYMBOL.toUpperCase()}&interval=${INTERVAL}&startTime=${dayStartUTC}&endTime=${endTime}&limit=500`;
-    const res = await fetch(url);
-    const data = await res.json();
-    data.forEach(d => {
-      const idx = Math.round((d[0] - dayStartUTC) / INTERVAL_MS);
-      if(idx >= 0 && idx < SLOTS){
-        candles[idx] = {
-          open:+d[1], high:+d[2], low:+d[3], close:+d[4], volume:+d[5],
-          isFinal: (d[0] + INTERVAL_MS) <= now
-        };
+      dayStartUTC = utcDayStartMs(viewDateStr);
+      candles = new Array(SLOTS).fill(null);
+      const now = Date.now();
+      const endTime = Math.min(now, dayStartUTC + SLOTS*INTERVAL_MS - 1);
+      const url = `https://api.binance.com/api/v3/klines?symbol=${SYMBOL.toUpperCase()}&interval=${INTERVAL}&startTime=${dayStartUTC}&endTime=${endTime}&limit=500`;
+      const res = await fetch(url);
+      const data = await res.json();
+      data.forEach(d => {
+        const idx = Math.round((d[0] - dayStartUTC) / INTERVAL_MS);
+        if(idx >= 0 && idx < SLOTS){
+          candles[idx] = {
+            open:+d[1], high:+d[2], low:+d[3], close:+d[4], volume:+d[5],
+            isFinal: isLiveDay ? ((d[0] + INTERVAL_MS) <= now) : true
+          };
+        }
+      });
+      if(isLiveDay){
+        const lastFilled = [...candles].reverse().find(c => c);
+        if(lastFilled) updateHeaderPrice(lastFilled.close);
       }
-    });
-    const lastFilled = [...candles].reverse().find(c => c);
-    if(lastFilled) updateHeaderPrice(lastFilled.close);
-  }
+    }
 
   function handleKline(k){
     const idx = Math.round((k.t - dayStartUTC) / INTERVAL_MS);
@@ -519,32 +585,35 @@
   }
   function clearPoll(){ if(pollTimer){ clearInterval(pollTimer); pollTimer = null; } }
 
-  // Handle UTC day rollover so the grid resets at 00:00 UTC automatically
-  setInterval(async () => {
-    const nd = utcDayStartMs();
-    const myToken = loadToken;
-    if(nd !== dayStartUTC){
-      await fetchHistory();
-      if(myToken !== loadToken) return; // a coin switch happened meanwhile
-      renderAll();
-    }
-    else { renderAll(); } // keep "current" box marker accurate as minutes tick over
-  }, 15000);
-
-  (async function init(){
-    try{
-      buildGrid();
-      setHeaderForSymbol(SYMBOL);
-      renderCoinTabs(''); // show BTC immediately, before full list arrives
-      await fetchHistory();
-      renderAll();
-      connectWS();
-      loadSymbolList(); // populate full tradable-pair list in the background
-    }catch(e){
-      setStatus('disconnected');
-      console.error('Init failed:', e);
-    }
-  })();
+  // Handle UTC day rollover so the grid resets at 00:00 UTC automatically (only while viewing today live)
+    setInterval(async () => {
+      if(!isLiveDay) return;
+      const nd = utcDayStartMs();
+      const myToken = loadToken;
+      if(nd !== dayStartUTC){
+        await fetchHistory();
+        if(myToken !== loadToken) return; // a coin switch happened meanwhile
+        renderAll();
+      }
+      else { renderAll(); } // keep "current" box marker accurate as minutes tick over
+    }, 15000);
+  
+    (async function init(){
+      try{
+        buildGrid();
+        setHeaderForSymbol(SYMBOL);
+        renderCoinTabs(''); // show BTC immediately, before full list arrives
+        dayPickerEl.max = todayUTCStr();
+        dayPickerEl.value = viewDateStr;
+        await fetchHistory();
+        renderAll();
+        connectWS();
+        loadSymbolList(); // populate full tradable-pair list in the background
+      }catch(e){
+        setStatus('disconnected');
+        console.error('Init failed:', e);
+      }
+    })();
 })();
 </script>
 </body>
