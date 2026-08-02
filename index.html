@@ -475,7 +475,7 @@
         <div class="tt-row"><span>H</span><b>${fmtPrice(c.high)}</b></div>
         <div class="tt-row"><span>L</span><b>${fmtPrice(c.low)}</b></div>
         <div class="tt-row"><span>C</span><b>${fmtPrice(c.close)}</b></div>
-        <div class="tt-row"><span>Vol</span><b>${c.volume.toFixed(3)} BTC</b></div>
+        <div class="tt-row"><span>Vol</span><b>${c.volume.toFixed(3)} ${SYMBOL.replace(/usdt$/i,'').toUpperCase()}</b></div>
         <div class="tt-pct ${pct>=0?'up':'down'}">${pct>=0?'+':''}${pct.toFixed(3)}%</div>
       `);
     } else {
