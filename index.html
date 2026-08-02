@@ -24,30 +24,31 @@
   .app{ max-width:1200px; margin:0 auto; padding:0 0 24px; }
 
   header{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:20px 24px; border-bottom:1px solid var(--border);
-    flex-wrap:wrap; gap:12px;
-  }
-  .title-block h1{ margin:0; font-size:21px; font-weight:700; letter-spacing:-0.02em; }
-  .title-block h1 span{ color:var(--muted); font-weight:500; }
-  .title-block .subtitle{ color:var(--muted); font-size:12px; margin-top:3px; }
-
-  .stats{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
-  .price{
-    font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
-    font-size:23px; font-weight:600; min-width:110px;
-  }
-  .change{
-    font-family:"SFMono-Regular",Consolas,monospace;
-    font-size:13px; font-weight:600; padding:4px 9px; border-radius:5px;
-    background:rgba(255,255,255,0.04);
-  }
-  .change.up{ color:var(--green); }
-  .change.down{ color:var(--red); }
-  .range{ font-family:"SFMono-Regular",Consolas,monospace; font-size:11px; color:var(--muted); }
-
-  .status{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--muted); }
-  .dot{ width:8px; height:8px; border-radius:50%; background:var(--muted); flex-shrink:0; }
+      display:flex; align-items:center; justify-content:space-between;
+      padding:7px 14px; border-bottom:1px solid var(--border);
+      flex-wrap:nowrap; gap:10px; overflow-x:auto;
+    }
+    .title-block{ display:flex; align-items:baseline; gap:8px; flex-shrink:0; }
+    .title-block h1{ margin:0; font-size:14px; font-weight:700; letter-spacing:-0.02em; white-space:nowrap; }
+    .title-block h1 span{ color:var(--muted); font-weight:500; }
+    .title-block .subtitle{ display:none; }
+  
+    .stats{ display:flex; align-items:center; gap:9px; flex-wrap:nowrap; flex-shrink:0; }
+    .price{
+      font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+      font-size:14px; font-weight:600; min-width:0; white-space:nowrap;
+    }
+    .change{
+      font-family:"SFMono-Regular",Consolas,monospace;
+      font-size:11px; font-weight:600; padding:2px 6px; border-radius:4px;
+      background:rgba(255,255,255,0.04); white-space:nowrap;
+    }
+    .change.up{ color:var(--green); }
+    .change.down{ color:var(--red); }
+    .range{ font-family:"SFMono-Regular",Consolas,monospace; font-size:10px; color:var(--muted); white-space:nowrap; }
+  
+    .status{ display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted); white-space:nowrap; }
+    .dot{ width:6px; height:6px; border-radius:50%; background:var(--muted); flex-shrink:0; }
   .dot.live{ background:var(--green); animation:pulse 1.8s infinite; }
   .dot.warn{ background:var(--amber); }
   .dot.down{ background:var(--red); }
@@ -58,39 +59,41 @@
   }
 
   .jump-btn{
-    font-size:11px; color:var(--muted); background:var(--panel2);
-    border:1px solid var(--border); border-radius:5px; padding:5px 10px;
-    cursor:pointer; transition:border-color .15s, color .15s;
-  }
-  .jump-btn:hover{ border-color:#33404d; color:var(--text); }
-
-  .coin-bar{
-    display:flex; align-items:center; gap:8px; padding:14px 24px 0;
-    flex-wrap:wrap;
-  }
-  .coin-search{
-    background:var(--panel2); border:1px solid var(--border); border-radius:6px;
-    color:var(--text); font-size:12px; padding:7px 10px; width:150px;
-    font-family:inherit; outline:none; transition:border-color .15s;
-  }
-  .coin-search:focus{ border-color:#33404d; }
-  .coin-search::placeholder{ color:var(--muted); }
-  .coin-tabs{
-    display:flex; align-items:center; gap:6px; flex-wrap:wrap; max-height:150px;
-    overflow-y:auto; padding:2px 0;
-  }
-  .coin-tab{
-    font-size:12px; font-weight:600; color:var(--muted); background:var(--panel2);
-    border:1px solid var(--border); border-radius:6px; padding:6px 12px;
-    cursor:pointer; transition:border-color .15s, color .15s, background .15s;
-    font-family:"SFMono-Regular",Consolas,monospace; white-space:nowrap;
-  }
-  .coin-tab:hover{ border-color:#33404d; color:var(--text); }
-  .coin-tab.active{ background:rgba(14,203,129,0.12); border-color:var(--green); color:var(--green); }
-  .coin-count{ color:var(--muted); font-size:11px; margin-left:4px; }
-  .coin-select-mobile{ display:none; }
-
-  .legend{ display:flex; align-items:center; gap:10px; padding:12px 24px; color:var(--muted); font-size:11px; flex-wrap:wrap; }
+      font-size:10px; color:var(--muted); background:var(--panel2);
+      border:1px solid var(--border); border-radius:4px; padding:3px 7px;
+      cursor:pointer; transition:border-color .15s, color .15s; flex-shrink:0;
+    }
+    .jump-btn:hover{ border-color:#33404d; color:var(--text); }
+  
+    #dayPicker{ width:118px; }
+  
+    .coin-bar{
+      display:flex; align-items:center; gap:6px; padding:6px 14px 0;
+      flex-wrap:wrap;
+    }
+    .coin-search{
+      background:var(--panel2); border:1px solid var(--border); border-radius:5px;
+      color:var(--text); font-size:11px; padding:4px 8px; width:130px;
+      font-family:inherit; outline:none; transition:border-color .15s;
+    }
+    .coin-search:focus{ border-color:#33404d; }
+    .coin-search::placeholder{ color:var(--muted); }
+    .coin-tabs{
+      display:flex; align-items:center; gap:4px; flex-wrap:wrap; max-height:100px;
+      overflow-y:auto; padding:2px 0;
+    }
+    .coin-tab{
+      font-size:11px; font-weight:600; color:var(--muted); background:var(--panel2);
+      border:1px solid var(--border); border-radius:5px; padding:3px 8px;
+      cursor:pointer; transition:border-color .15s, color .15s, background .15s;
+      font-family:"SFMono-Regular",Consolas,monospace; white-space:nowrap;
+    }
+    .coin-tab:hover{ border-color:#33404d; color:var(--text); }
+    .coin-tab.active{ background:rgba(14,203,129,0.12); border-color:var(--green); color:var(--green); }
+    .coin-count{ color:var(--muted); font-size:10px; margin-left:4px; }
+    .coin-select-mobile{ display:none; }
+  
+    .legend{ display:flex; align-items:center; gap:8px; padding:6px 14px; color:var(--muted); font-size:10px; flex-wrap:wrap; }
   .legend-bar{
     width:130px; height:7px; border-radius:4px;
     background:linear-gradient(to right, hsl(351,72%,56%), hsl(351,72%,14%) 42%, #11161d 50%, hsl(152,65%,14%) 58%, hsl(152,65%,56%));
@@ -98,21 +101,28 @@
   .legend-swatch{ width:12px; height:12px; border-radius:3px; background:#10151c; border:1px dashed #232c36; display:inline-block; vertical-align:-2px; }
 
   .heatmap-wrap{
-    margin:6px 24px 4px; border:1px solid var(--border); border-radius:8px;
-    background:var(--panel); padding:16px; overflow-x:auto;
-  }
+        margin:4px 14px 4px; border:1px solid var(--border); border-radius:8px;
+        background:var(--panel); padding:8px; overflow-x:auto;
+      }
+    .box-count{
+      display:flex; align-items:center; gap:14px; padding:4px 14px 0;
+      font-family:"SFMono-Regular",Consolas,monospace; font-size:11px; color:var(--muted);
+    }
+    .box-count b{ font-weight:700; }
+    .box-count .bc-green b{ color:var(--green); }
+    .box-count .bc-red b{ color:var(--red); }
   .heatmap{
-    display:grid;
-    grid-template-columns: 52px repeat(20, minmax(26px, 1fr));
-    grid-template-rows: 18px repeat(24, 26px);
-    gap:3px;
-    min-width:780px;
-  }
-  .col-head{ font:10px/18px monospace; color:var(--muted); text-align:center; }
-  .row-head{
-    font:10px monospace; color:var(--muted);
-    display:flex; align-items:center; justify-content:flex-end; padding-right:6px;
-  }
+      display:grid;
+      grid-template-columns: 34px repeat(20, minmax(16px, 1fr));
+      grid-template-rows: 13px repeat(24, 16px);
+      gap:2px;
+      min-width:520px;
+    }
+    .col-head{ font:8px/13px monospace; color:var(--muted); text-align:center; }
+    .row-head{
+      font:8px monospace; color:var(--muted);
+      display:flex; align-items:center; justify-content:flex-end; padding-right:4px;
+    }
   .cell{
     border-radius:4px; background:#12181f; cursor:pointer;
     transition:transform .08s ease, box-shadow .08s ease;
@@ -143,9 +153,15 @@
   .tt-pct.down{ color:var(--red); }
 
   @media (max-width: 520px){
-    .coin-bar{ flex-direction:column; align-items:stretch; }
-    .coin-search{ width:100%; }
-  }
+      .coin-bar{ flex-direction:column; align-items:stretch; }
+      .coin-search{ width:100%; }
+    }
+    @media (max-width: 700px){
+      header{ flex-wrap:wrap; }
+    }
+    @media (max-width: 700px){
+      header{ flex-wrap:wrap; }
+    }
 </style>
 </head>
 <body>
@@ -173,14 +189,19 @@
   </div>
 
   <div class="legend">
-    <span>Down</span>
-    <div class="legend-bar"></div>
-    <span>Up</span>
-    <span style="margin-left:10px;"><span class="legend-swatch"></span> not started yet</span>
-    <span style="margin-left:6px;">— color intensity = size of that 3‑min move</span>
-  </div>
-
-  <div class="heatmap-wrap">
+      <span>Down</span>
+      <div class="legend-bar"></div>
+      <span>Up</span>
+      <span style="margin-left:10px;"><span class="legend-swatch"></span> not started yet</span>
+      <span style="margin-left:6px;">— color intensity = size of that 3‑min move</span>
+    </div>
+  
+    <div class="box-count">
+      <span class="bc-green">Green boxes: <b id="greenCount">0</b></span>
+      <span class="bc-red">Red boxes: <b id="redCount">0</b></span>
+    </div>
+  
+    <div class="heatmap-wrap">
     <div class="heatmap" id="heatmapGrid"></div>
   </div>
   <div class="hint">Rows = UTC hour, columns = minute within the hour (00,03,…,57). Hover a box for its exact OHLC + volume. Boxes fill in live as the day progresses.</div>
@@ -213,7 +234,9 @@
   const statusDot = document.getElementById('statusDot');
   const statusText = document.getElementById('statusText');
   const jumpBtn = document.getElementById('jumpNow');
-  const titleH1 = document.querySelector('.title-block h1');
+    const greenCountEl = document.getElementById('greenCount');
+    const redCountEl = document.getElementById('redCount');
+    const titleH1 = document.querySelector('.title-block h1');
   const subtitleEl = document.querySelector('.title-block .subtitle');
   const coinTabsEl = document.getElementById('coinTabs');
     const coinSearchEl = document.getElementById('coinSearch');
@@ -431,23 +454,27 @@
       if(p > maxPct) maxPct = p;
     }
     maxAbsPct = maxPct;
-    if(lo !== Infinity) dayRangeEl.textContent = `Range ${fmtPrice(lo)} – ${fmtPrice(hi)}`;
-
-    const nowSlot = currentSlotIndex();
-    for(let idx=0; idx<SLOTS; idx++){
-      const el = cellEls[idx];
-      const c = candles[idx];
-      el.classList.remove('current');
-      if(!c){
-        el.classList.add('future');
-        el.style.background = '';
-      } else {
-        el.classList.remove('future');
-        el.style.background = colorFor(c.open, c.close);
-        if(idx === nowSlot && c.isFinal === false) el.classList.add('current');
+        if(lo !== Infinity) dayRangeEl.textContent = `Range ${fmtPrice(lo)} – ${fmtPrice(hi)}`;
+    
+        const nowSlot = currentSlotIndex();
+        let greenN = 0, redN = 0;
+        for(let idx=0; idx<SLOTS; idx++){
+          const el = cellEls[idx];
+          const c = candles[idx];
+          el.classList.remove('current');
+          if(!c){
+            el.classList.add('future');
+            el.style.background = '';
+          } else {
+            el.classList.remove('future');
+            el.style.background = colorFor(c.open, c.close);
+            if(idx === nowSlot && c.isFinal === false) el.classList.add('current');
+            if(c.close >= c.open) greenN++; else redN++;
+          }
+        }
+        if(greenCountEl) greenCountEl.textContent = greenN;
+        if(redCountEl) redCountEl.textContent = redN;
       }
-    }
-  }
 
   function showTooltip(clientX, clientY, html){
     tooltip.innerHTML = html;
