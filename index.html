@@ -397,10 +397,27 @@
   function pad(n,l){ return String(n).padStart(l,'0'); }
   function hourStart(ms){ const d=new Date(ms); d.setMinutes(0,0,0); return d.getTime(); }
   function ensureHourCache(hs){
-    if(!cache.has(hs)) cache.set(hs, new Array(SEC_PER_HOUR).fill(null));
-    return cache.get(hs);
-  }
-  function colorClass(o,c){ if(c>o) return 'up'; if(c<o) return 'down'; return 'flat'; }
+      if(!cache.has(hs)) cache.set(hs, new Array(SEC_PER_HOUR).fill(null));
+      return cache.get(hs);
+    }
+    function getSecond(t){
+      const hs=hourStart(t);
+      const arr=cache.get(hs);
+      if(!arr) return null;
+      const idx=Math.floor((t-hs)/1000);
+      return (idx>=0 && idx<SEC_PER_HOUR) ? arr[idx] : null;
+    }
+    function setSecond(t,data){
+      const hs=hourStart(t);
+      const arr=ensureHourCache(hs);
+      const idx=Math.floor((t-hs)/1000);
+      if(idx>=0 && idx<SEC_PER_HOUR) arr[idx]=data;
+    }
+    function isViewLive(viewStart){
+      const nowMs=Date.now();
+      return viewStart<=nowMs && (viewStart+SEC_PER_HOUR*1000)>nowMs;
+    }
+    function colorClass(o,c){ if(c>o) return 'up'; if(c<o) return 'down'; return 'flat'; }
   function fmtTime(ms){
     const d=new Date(ms);
     return pad(d.getHours(),2)+':'+pad(d.getMinutes(),2)+':'+pad(d.getSeconds(),2);
@@ -449,23 +466,24 @@
   }
 
   // ---------- painting ----------
-  function paintFromCache(hs){
-    const arr = cache.get(hs) || new Array(SEC_PER_HOUR).fill(null);
-    const isLiveHour = hs===state.liveHourStart;
-    const curSec = isLiveHour ? Math.min(SEC_PER_HOUR-1, Math.floor((Date.now()-hs)/1000)) : SEC_PER_HOUR-1;
-    for(let i=0;i<SEC_PER_HOUR;i++){
-      const cell=cells[i];
-      const d=arr[i];
-      cell.classList.remove('live');
-      if(d){ setCellClass(cell, colorClass(d.o,d.c), d); }
-      else if(isLiveHour && i>curSec){ setCellClass(cell,'future',null); }
-      else { setCellClass(cell,'nodata',null); }
-    }
-    if(isLiveHour && arr[curSec]) markLiveCell(curSec);
-        state.lastCurSec = isLiveHour ? curSec : -1;
-        updateProgress(isLiveHour ? curSec : null);
-        updateStats();
+  function paintFromCache(viewStart){
+      const nowMs=Date.now();
+      for(let i=0;i<SEC_PER_HOUR;i++){
+        const t=viewStart+i*1000;
+        const cell=cells[i];
+        const d=getSecond(t);
+        cell.classList.remove('live');
+        if(d){ setCellClass(cell, colorClass(d.o,d.c), d); }
+        else if(t>nowMs){ setCellClass(cell,'future',null); }
+        else { setCellClass(cell,'nodata',null); }
       }
+      const liveIdx=Math.floor((nowMs-viewStart)/1000);
+      const showLiveMarker = liveIdx>=0 && liveIdx<SEC_PER_HOUR && getSecond(viewStart+liveIdx*1000);
+      if(showLiveMarker) markLiveCell(liveIdx);
+      state.lastCurSec = (liveIdx>=0 && liveIdx<SEC_PER_HOUR) ? liveIdx : -1;
+      updateProgress((liveIdx>=0 && liveIdx<SEC_PER_HOUR) ? liveIdx : null);
+      updateStats();
+    }
 
   function updateProgress(curSec){
       const txt=document.getElementById('progressText');
@@ -496,37 +514,35 @@
       }
 
   // ---------- REST historical fetch ----------
-  async function loadHistorical(hs, uptoSecExclusive){
-    if(loadingHours.has(hs)) return;
-    loadingHours.add(hs);
-    const arr = ensureHourCache(hs);
-    const hourEnd = hs+SEC_PER_HOUR*1000-1;
-    const targetEnd = uptoSecExclusive>=SEC_PER_HOUR ? hourEnd : hs+uptoSecExclusive*1000-1;
-    let cursor = hs;
-    try{
-      while(cursor <= targetEnd){
-        const chunkEnd = Math.min(cursor+999*1000, targetEnd);
-        const url = `https://api.binance.com/api/v3/klines?symbol=${encodeURIComponent(state.symbol)}&interval=1s&startTime=${cursor}&endTime=${chunkEnd}&limit=1000`;
-        const res = await fetch(url);
-        if(!res.ok) throw new Error('http '+res.status);
-        const rows = await res.json();
-        if(!Array.isArray(rows) || rows.length===0) break;
-        for(const r of rows){
-          const idx=Math.round((r[0]-hs)/1000);
-          if(idx>=0 && idx<SEC_PER_HOUR) arr[idx]={o:parseFloat(r[1]), c:parseFloat(r[4])};
+  async function loadHistorical(rangeStart, uptoSecExclusive){
+      if(loadingHours.has(rangeStart)) return;
+      loadingHours.add(rangeStart);
+      const rangeEnd = rangeStart+SEC_PER_HOUR*1000-1;
+      const targetEnd = uptoSecExclusive>=SEC_PER_HOUR ? rangeEnd : rangeStart+uptoSecExclusive*1000-1;
+      let cursor = rangeStart;
+      try{
+        while(cursor <= targetEnd){
+          const chunkEnd = Math.min(cursor+999*1000, targetEnd);
+          const url = `https://api.binance.com/api/v3/klines?symbol=${encodeURIComponent(state.symbol)}&interval=1s&startTime=${cursor}&endTime=${chunkEnd}&limit=1000`;
+          const res = await fetch(url);
+          if(!res.ok) throw new Error('http '+res.status);
+          const rows = await res.json();
+          if(!Array.isArray(rows) || rows.length===0) break;
+          for(const r of rows){
+            setSecond(r[0], {o:parseFloat(r[1]), c:parseFloat(r[4])});
+          }
+          const last=rows[rows.length-1];
+          cursor=last[0]+1000;
+          if(rows.length<1000) break;
         }
-        const last=rows[rows.length-1];
-        cursor=last[0]+1000;
-        if(rows.length<1000) break;
+        hideBanner();
+      }catch(err){
+        showBanner('Historical data blocked or unreachable in this preview (network/CORS restriction). Download this file and open it directly in your browser to fetch live Binance data.');
+      } finally {
+        loadingHours.delete(rangeStart);
+        if(state.viewHourStart===rangeStart) paintFromCache(rangeStart);
       }
-      hideBanner();
-    }catch(err){
-      showBanner('Historical data blocked or unreachable in this preview (network/CORS restriction). Download this file and open it directly in your browser to fetch live Binance data.');
-    } finally {
-      loadingHours.delete(hs);
-      if(state.viewHourStart===hs) paintFromCache(hs);
     }
-  }
 
   // ---------- WebSocket (live hour only) ----------
   function connectWS(){
@@ -560,36 +576,28 @@
   }
 
   function handleCandle(t,o,c){
-    let hs=state.liveHourStart;
-    if(t>=hs+3600000 || t<hs){
-      rollToHour(hourStart(t));
-      hs=state.liveHourStart;
-    }
-    const arr=ensureHourCache(hs);
-    const idx=Math.floor((t-hs)/1000);
-    if(idx<0||idx>=SEC_PER_HOUR) return;
-    arr[idx]={o,c};
-    if(state.viewHourStart===hs){
-          const cell=cells[idx];
-          setCellClass(cell, colorClass(o,c), {o,c});
-          markLiveCell(idx);
-          updateProgress(idx);
-          state.lastCurSec=idx;
-          updateStats();
-        }
+      setSecond(t, {o,c});
+      if(t>=state.viewHourStart && t<state.viewHourStart+SEC_PER_HOUR*1000){
+        const idx=Math.floor((t-state.viewHourStart)/1000);
+        const cell=cells[idx];
+        setCellClass(cell, colorClass(o,c), {o,c});
+        markLiveCell(idx);
+        updateProgress(idx);
+        state.lastCurSec=idx;
+        updateStats();
       }
-
-  function rollToHour(newHs){
-    state.liveHourStart=newHs;
-    ensureHourCache(newHs);
-    if(state.isLive){
-      state.viewHourStart=newHs;
-      updateHourLabel();
-      paintFromCache(newHs);
-      loadHistorical(newHs, Math.floor((Date.now()-newHs)/1000)+1);
-      updateNav();
     }
-  }
+  
+    function rollLiveHour(newHs){
+      state.liveHourStart=newHs;
+      if(state.isLive){
+        state.viewHourStart=newHs;
+        updateHourLabel();
+        paintFromCache(newHs);
+        loadHistorical(newHs, Math.floor((Date.now()-newHs)/1000)+1);
+        updateNav();
+      }
+    }
 
   // ---------- status / banner ----------
   function setStatus(kind){
@@ -616,15 +624,14 @@
   }
 
   function setView(hs){
-    state.viewHourStart=hs;
-    state.isLive = hs===state.liveHourStart;
-    updateHourLabel();
-    ensureHourCache(hs);
-    paintFromCache(hs);
-    const upto = state.isLive ? Math.floor((Date.now()-hs)/1000)+1 : SEC_PER_HOUR;
-    loadHistorical(hs, upto);
-    updateNav();
-  }
+      state.viewHourStart=hs;
+      state.isLive = hs===state.liveHourStart;
+      updateHourLabel();
+      paintFromCache(hs);
+      const upto = isViewLive(hs) ? Math.floor((Date.now()-hs)/1000)+1 : SEC_PER_HOUR;
+      loadHistorical(hs, upto);
+      updateNav();
+    }
   function prevHour(){ setView(state.viewHourStart-3600000); }
   function nextHour(){ const t=state.viewHourStart+3600000; if(t<=state.liveHourStart) setView(t); }
   function jumpToLive(){ setView(state.liveHourStart); }
@@ -779,20 +786,21 @@
 
   // ---------- ticking clock ----------
   setInterval(()=>{
-    const nowHs=hourStart(Date.now());
-    if(nowHs!==state.liveHourStart) rollToHour(nowHs);
-    if(state.viewHourStart===state.liveHourStart){
-      const curSec=Math.min(SEC_PER_HOUR-1, Math.floor((Date.now()-state.viewHourStart)/1000));
-      for(let i=Math.max(0,state.lastCurSec); i<=curSec; i++){
-        const cell=cells[i];
-        if(cell && cell.classList.contains('future')) setCellClass(cell,'nodata',null);
+      const nowMs=Date.now();
+      const nowCanonical=hourStart(nowMs);
+      if(nowCanonical!==state.liveHourStart) rollLiveHour(nowCanonical);
+      if(isViewLive(state.viewHourStart)){
+        const curSec=Math.min(SEC_PER_HOUR-1, Math.floor((nowMs-state.viewHourStart)/1000));
+        for(let i=Math.max(0,state.lastCurSec); i<=curSec; i++){
+          const cell=cells[i];
+          if(cell && cell.classList.contains('future')) setCellClass(cell,'nodata',null);
+        }
+        state.lastCurSec=curSec;
+        updateProgress(curSec);
+        updateStats();
+        updateNav();
       }
-      state.lastCurSec=curSec;
-            updateProgress(curSec);
-            updateStats();
-            updateNav();
-          }
-        },1000);
+    },1000);
 
   // ---------- viewport auto-fit ----------
         function fitGridsToViewport(){
