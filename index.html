@@ -73,17 +73,24 @@
     }
   
     .controls{
-        display:flex; flex-wrap:wrap; align-items:center; gap:6px;
-        margin-top:0; padding:4px 8px;
-        background:var(--panel);
-        border:1px solid var(--border);
-        border-radius:6px;
-        flex:1 1 auto;
-      }
+            display:flex; flex-wrap:wrap; align-items:center; gap:4px;
+            margin-top:0; padding:3px 6px;
+            background:var(--panel);
+            border:1px solid var(--border);
+            border-radius:6px;
+            flex:0 0 auto;
+            height:auto;
+            overflow:visible;
+          }
+          .controls .row1{
+            display:flex; flex-wrap:nowrap; align-items:center; gap:4px;
+            width:100%; overflow-x:auto; overflow-y:hidden; scrollbar-width:none;
+          }
+          .controls .row1::-webkit-scrollbar{ display:none; }
   .dot{
-    width:8px; height:8px; border-radius:50%;
-    background:var(--muted); flex:0 0 auto;
-  }
+      width:6px; height:6px; border-radius:50%;
+      background:var(--muted); flex:0 0 auto;
+    }
   .dot.live{ background:#26d07c; box-shadow:0 0 0 0 rgba(38,208,124,.6); animation:pulse 1.6s infinite; }
   .dot.hist{ background:var(--accent); }
   @keyframes pulse{
@@ -93,49 +100,54 @@
   }
   @media (prefers-reduced-motion: reduce){ .dot.live{ animation:none; } }
 
-  .status-text{ font-size:12px; color:var(--muted); min-width:90px; }
+  .status-text{ font-size:10px; color:var(--muted); min-width:70px; white-space:nowrap; flex-shrink:0; }
 
   .sym-input{
-    background:var(--panel-2); color:var(--text);
-    border:1px solid var(--border); border-radius:5px;
-    padding:6px 9px; font:inherit; font-size:13px; width:110px;
-    text-transform:uppercase; letter-spacing:0.5px;
-  }
+      background:var(--panel-2); color:var(--text);
+      border:1px solid var(--border); border-radius:5px;
+      padding:3px 6px; font:inherit; font-size:11px; width:82px;
+      text-transform:uppercase; letter-spacing:0.5px; flex-shrink:0;
+    }
   .sym-input:focus{ outline:1px solid var(--accent); }
 
-  .navgroup{ display:flex; align-items:center; gap:6px; margin-left:auto; }
-  button.navbtn{
-    background:var(--panel-2); color:var(--text);
-    border:1px solid var(--border); border-radius:5px;
-    padding:6px 11px; font:inherit; font-size:14px; cursor:pointer;
-  }
+  .navgroup{ display:flex; align-items:center; gap:4px; margin-left:auto; flex:0 0 auto; }
+    button.navbtn{
+      background:var(--panel-2); color:var(--text);
+      border:1px solid var(--border); border-radius:5px;
+      padding:3px 7px; font:inherit; font-size:11px; cursor:pointer;
+    }
   button.navbtn:hover:not(:disabled){ border-color:var(--accent); color:var(--accent); }
   button.navbtn:disabled{ opacity:.35; cursor:not-allowed; }
   button.navbtn:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
 
   .hourlabel{
-    font-size:13px; min-width:210px; text-align:center;
-    color:#e7ebef; letter-spacing:0.3px;
-  }
+      font-size:10px; min-width:150px; text-align:center;
+      color:#e7ebef; letter-spacing:0.3px; white-space:nowrap;
+    }
   .livebtn{
-    background:transparent; color:var(--accent);
-    border:1px solid var(--accent); border-radius:5px;
-    padding:6px 10px; font:inherit; font-size:12px; cursor:pointer;
-  }
+      background:transparent; color:var(--accent);
+      border:1px solid var(--accent); border-radius:5px;
+      padding:3px 8px; font:inherit; font-size:10px; cursor:pointer; white-space:nowrap;
+    }
   .livebtn:hover{ background:rgba(255,180,84,0.1); }
   .hidden{ display:none !important; }
 
-  .timeset{ gap:4px; }
-  .timeunit{ display:flex; flex-direction:column; align-items:center; gap:2px; }
-  .timeval{ display:flex; flex-direction:column; align-items:center; }
-  .timeinput{
-    width:44px; text-align:center; background:var(--panel-2); color:var(--text);
-    border:1px solid var(--border); border-radius:4px; padding:3px 2px;
-    font:inherit; font-size:12px; -moz-appearance:textfield;
-  }
-  .timeinput::-webkit-outer-spin-button, .timeinput::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
-  .timelbl{ font-size:8px; color:var(--muted); letter-spacing:0.5px; margin-top:1px; }
-  button.spinbtn{ padding:2px 8px; font-size:10px; line-height:1; }
+  .timeset{
+      gap:3px; flex:0 0 auto;
+      flex-basis:100%; width:100%;
+      justify-content:center; margin-left:0 !important;
+      margin-top:2px;
+    }
+    .timeunit{ display:flex; flex-direction:column; align-items:center; gap:1px; }
+    .timeval{ display:flex; flex-direction:column; align-items:center; }
+    .timeinput{
+      width:32px; text-align:center; background:var(--panel-2); color:var(--text);
+      border:1px solid var(--border); border-radius:4px; padding:2px 1px;
+      font:inherit; font-size:10px; -moz-appearance:textfield;
+    }
+    .timeinput::-webkit-outer-spin-button, .timeinput::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+    .timelbl{ font-size:6.5px; color:var(--muted); letter-spacing:0.5px; margin-top:0; }
+    button.spinbtn{ padding:1px 6px; font-size:8px; line-height:1; }
 
   .progresswrap{
     margin-top:10px; display:flex; align-items:center; gap:10px;
@@ -276,28 +288,30 @@
     <div class="eyebrow hidden">3,600 one-second candles, boxed and numbered — one hour visible at a time</div>
   
     <div class="controls">
-    <span id="liveDot" class="dot"></span>
-    <span id="statusText" class="status-text">connecting…</span>
-
-    <input id="symInput" class="sym-input" list="symbols" value="BTCUSDT" spellcheck="false" />
-    <datalist id="symbols">
-      <option value="BTCUSDT"></option>
-      <option value="ETHUSDT"></option>
-      <option value="BNBUSDT"></option>
-      <option value="SOLUSDT"></option>
-      <option value="XRPUSDT"></option>
-      <option value="DOGEUSDT"></option>
-      <option value="ADAUSDT"></option>
-    </datalist>
-
-    <div class="navgroup">
-          <button id="prevBtn" class="navbtn" title="Previous hour">◀</button>
-          <div id="hourLabel" class="hourlabel">—</div>
-          <button id="nextBtn" class="navbtn" title="Next hour">▶</button>
-          <button id="liveBtn" class="livebtn hidden">Jump to live</button>
-        </div>
-
-        <div class="navgroup timeset">
+          <div class="row1">
+        <span id="liveDot" class="dot"></span>
+        <span id="statusText" class="status-text">connecting…</span>
+    
+        <input id="symInput" class="sym-input" list="symbols" value="BTCUSDT" spellcheck="false" />
+        <datalist id="symbols">
+          <option value="BTCUSDT"></option>
+          <option value="ETHUSDT"></option>
+          <option value="BNBUSDT"></option>
+          <option value="SOLUSDT"></option>
+          <option value="XRPUSDT"></option>
+          <option value="DOGEUSDT"></option>
+          <option value="ADAUSDT"></option>
+        </datalist>
+    
+        <div class="navgroup">
+              <button id="prevBtn" class="navbtn" title="Previous hour">◀</button>
+              <div id="hourLabel" class="hourlabel">—</div>
+              <button id="nextBtn" class="navbtn" title="Next hour">▶</button>
+              <button id="liveBtn" class="livebtn hidden">Jump to live</button>
+            </div>
+          </div>
+    
+            <div class="navgroup timeset">
           <div class="timeunit">
             <button id="hrUp" class="navbtn spinbtn" title="Increase hour">▲</button>
             <div class="timeval"><input id="hrInput" class="timeinput" type="number" min="0" max="23" value="0" /><span class="timelbl">HR</span></div>
@@ -314,10 +328,10 @@
             <button id="secDown" class="navbtn spinbtn" title="Decrease second">▼</button>
           </div>
           <button id="applyTimeBtn" class="livebtn" title="Jump grid start to this time">Set start</button>
-        </div>
-      </div>
-    
-      <div id="statsBar" class="statsbar">
+                  </div>
+                </div>
+              
+                <div id="statsBar" class="statsbar">
           <span class="stat up">GREEN <b id="statUp">0</b></span>
           <span class="stat down">RED <b id="statDown">0</b></span>
           <span class="stat nodata">DRAW <b id="statDraw">0</b></span>
@@ -392,10 +406,10 @@
     return pad(d.getHours(),2)+':'+pad(d.getMinutes(),2)+':'+pad(d.getSeconds(),2);
   }
   function fmtHourLabel(hs){
-    const d1=new Date(hs), d2=new Date(hs+3600000);
-    const day=d1.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
-    return day+' · '+pad(d1.getHours(),2)+':00–'+pad(d2.getHours(),2)+':00';
-  }
+      const d1=new Date(hs), d2=new Date(hs+3600000);
+      const day=d1.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+      return day+' · '+pad(d1.getHours(),2)+':'+pad(d1.getMinutes(),2)+':'+pad(d1.getSeconds(),2)+'–'+pad(d2.getHours(),2)+':'+pad(d2.getMinutes(),2)+':'+pad(d2.getSeconds(),2);
+    }
 
   // ---------- build grid ----------
   function makeCell(num, idx){
@@ -624,40 +638,43 @@
     return v;
   }
   function syncTimeInputsFromView(){
-    const d=new Date(state.viewHourStart);
-    document.getElementById('hrInput').value=pad(d.getHours(),2);
-    document.getElementById('minInput').value='00';
-    document.getElementById('secInput').value='00';
-  }
-  function stepTimeInput(id,min,max,delta){
-    const el=document.getElementById(id);
-    let v=clampInt(el.value,min,max)+delta;
-    if(v>max) v=min;
-    if(v<min) v=max;
-    el.value=pad(v,2);
-  }
-  function applyManualTime(){
-    const hrEl=document.getElementById('hrInput');
-    const minEl=document.getElementById('minInput');
-    const secEl=document.getElementById('secInput');
-    const hr=clampInt(hrEl.value,0,23);
-    const min=clampInt(minEl.value,0,59);
-    const sec=clampInt(secEl.value,0,59);
-    hrEl.value=pad(hr,2); minEl.value=pad(min,2); secEl.value=pad(sec,2);
-    const base=new Date(state.viewHourStart);
-    base.setHours(hr,0,0,0);
-    let targetHs=hourStart(base.getTime());
-    if(targetHs>state.liveHourStart) targetHs=state.liveHourStart;
-    setView(targetHs);
-    if(min!==0 || sec!==0){
-      const idx=Math.min(SEC_PER_HOUR-1, min*60+sec);
-      const cell=cells[idx];
-      if(cell){
-        cell.scrollIntoView({block:'center', inline:'center', behavior:'smooth'});
-        showDetail(cell);
-      }
+      const d=new Date(state.viewHourStart);
+      document.getElementById('hrInput').value=pad(d.getHours(),2);
+      document.getElementById('minInput').value=pad(d.getMinutes(),2);
+      document.getElementById('secInput').value=pad(d.getSeconds(),2);
     }
-  }
+  function stepTime(unit, delta){
+      let hr=clampInt(document.getElementById('hrInput').value,0,23);
+      let min=clampInt(document.getElementById('minInput').value,0,59);
+      let sec=clampInt(document.getElementById('secInput').value,0,59);
+      let total=hr*3600+min*60+sec;
+      if(unit==='hr') total+=delta*3600;
+      else if(unit==='min') total+=delta*60;
+      else total+=delta;
+      total=((total%86400)+86400)%86400;
+      hr=Math.floor(total/3600);
+      min=Math.floor((total%3600)/60);
+      sec=total%60;
+      document.getElementById('hrInput').value=pad(hr,2);
+      document.getElementById('minInput').value=pad(min,2);
+      document.getElementById('secInput').value=pad(sec,2);
+      applyManualTime();
+    }
+  function applyManualTime(){
+      const hrEl=document.getElementById('hrInput');
+      const minEl=document.getElementById('minInput');
+      const secEl=document.getElementById('secInput');
+      const hr=clampInt(hrEl.value,0,23);
+      const min=clampInt(minEl.value,0,59);
+      const sec=clampInt(secEl.value,0,59);
+      hrEl.value=pad(hr,2); minEl.value=pad(min,2); secEl.value=pad(sec,2);
+      const base=new Date(state.viewHourStart);
+      base.setHours(hr,min,sec,0);
+      let targetStart=base.getTime();
+      const nowMs=Date.now();
+      if(targetStart>nowMs) targetStart-=86400000;
+      setView(targetStart);
+    }
 
   function setSymbol(raw){
     const sym=(raw||'').trim().toUpperCase();
@@ -743,21 +760,22 @@
   symInput.addEventListener('change', ()=>setSymbol(symInput.value));
   symInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ setSymbol(symInput.value); symInput.blur(); } });
 
-  document.getElementById('hrUp').addEventListener('click', ()=>stepTimeInput('hrInput',0,23,1));
-  document.getElementById('hrDown').addEventListener('click', ()=>stepTimeInput('hrInput',0,23,-1));
-  document.getElementById('minUp').addEventListener('click', ()=>stepTimeInput('minInput',0,59,1));
-  document.getElementById('minDown').addEventListener('click', ()=>stepTimeInput('minInput',0,59,-1));
-  document.getElementById('secUp').addEventListener('click', ()=>stepTimeInput('secInput',0,59,1));
-  document.getElementById('secDown').addEventListener('click', ()=>stepTimeInput('secInput',0,59,-1));
-  document.getElementById('applyTimeBtn').addEventListener('click', applyManualTime);
-  ['hrInput','minInput','secInput'].forEach(id=>{
-    document.getElementById(id).addEventListener('change', e=>{
-      const el=e.target;
-      const max = id==='hrInput'?23:59;
-      el.value=pad(clampInt(el.value,0,max),2);
+  document.getElementById('hrUp').addEventListener('click', ()=>stepTime('hr',1));
+    document.getElementById('hrDown').addEventListener('click', ()=>stepTime('hr',-1));
+    document.getElementById('minUp').addEventListener('click', ()=>stepTime('min',1));
+    document.getElementById('minDown').addEventListener('click', ()=>stepTime('min',-1));
+    document.getElementById('secUp').addEventListener('click', ()=>stepTime('sec',1));
+    document.getElementById('secDown').addEventListener('click', ()=>stepTime('sec',-1));
+    document.getElementById('applyTimeBtn').addEventListener('click', applyManualTime);
+    ['hrInput','minInput','secInput'].forEach(id=>{
+      document.getElementById(id).addEventListener('change', e=>{
+        const el=e.target;
+        const max = id==='hrInput'?23:59;
+        el.value=pad(clampInt(el.value,0,max),2);
+        applyManualTime();
+      });
+      document.getElementById(id).addEventListener('keydown', e=>{ if(e.key==='Enter') applyManualTime(); });
     });
-    document.getElementById(id).addEventListener('keydown', e=>{ if(e.key==='Enter') applyManualTime(); });
-  });
 
   // ---------- ticking clock ----------
   setInterval(()=>{
