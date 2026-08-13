@@ -284,82 +284,81 @@
 <div class="app">
 
   <div class="topbar">
-    <div class="wordmark">SECOND GRID <span class="tag">binance · 1s</span></div>
-    <div class="eyebrow hidden">3,600 one-second candles, boxed and numbered — one hour visible at a time</div>
+      <div class="wordmark hidden">SECOND GRID <span class="tag">binance · 1s</span></div>
+      <div class="eyebrow hidden">3,600 one-second candles, boxed and numbered — one hour visible at a time</div>
+    
+      <div id="statsBar" class="statsbar">
+            <span id="liveDot" class="dot"></span>
+            <span id="statusText" class="status-text hidden">connecting…</span>
+            <span class="stat up">GREEN <b id="statUp">0</b></span>
+            <span class="stat down">RED <b id="statDown">0</b></span>
+            <span class="stat nodata">DRAW <b id="statDraw">0</b></span>
+          </div>
+        </div>
+                
+                  <div class="progresswrap hidden">
+        <span id="progressText">—</span>
+        <div class="progressbar"><i id="progressFill"></i></div>
+      </div>
+  
+    <div id="banner" class="banner hidden"></div>
+  
+    <div class="legend hidden">
+      <div class="item"><span class="swatch" style="background:var(--up)"></span> up second</div>
+      <div class="item"><span class="swatch" style="background:var(--down)"></span> down second</div>
+      <div class="item"><span class="swatch" style="background:var(--flat)"></span> flat</div>
+      <div class="item"><span class="swatch" style="background:var(--future)"></span> not reached yet</div>
+      <div class="item"><span class="swatch" style="background:var(--nodata)"></span> no data</div>
+      <div class="item"><span class="swatch" style="background:var(--accent)"></span> current second</div>
+    </div>
+  
+    <section class="panel">
+      <div class="panel-head"><b>SECONDS</b></div>
+      <div class="grid-wrap"><div id="grid" class="grid"></div></div>
+    </section>
+  
+    <div id="detail" class="detail hidden"></div>
   
     <div class="controls">
-          <div class="row1">
-        <span id="liveDot" class="dot"></span>
-        <span id="statusText" class="status-text">connecting…</span>
-    
-        <input id="symInput" class="sym-input" list="symbols" value="BTCUSDT" spellcheck="false" />
-        <datalist id="symbols">
-          <option value="BTCUSDT"></option>
-          <option value="ETHUSDT"></option>
-          <option value="BNBUSDT"></option>
-          <option value="SOLUSDT"></option>
-          <option value="XRPUSDT"></option>
-          <option value="DOGEUSDT"></option>
-          <option value="ADAUSDT"></option>
-        </datalist>
-    
-        <div class="navgroup">
-              <button id="prevBtn" class="navbtn" title="Previous hour">◀</button>
-              <div id="hourLabel" class="hourlabel">—</div>
-              <button id="nextBtn" class="navbtn" title="Next hour">▶</button>
-              <button id="liveBtn" class="livebtn hidden">Jump to live</button>
+            <div class="row1">
+          <input id="symInput" class="sym-input" list="symbols" value="BTCUSDT" spellcheck="false" />
+          <datalist id="symbols">
+            <option value="BTCUSDT"></option>
+            <option value="ETHUSDT"></option>
+            <option value="BNBUSDT"></option>
+            <option value="SOLUSDT"></option>
+            <option value="XRPUSDT"></option>
+            <option value="DOGEUSDT"></option>
+            <option value="ADAUSDT"></option>
+          </datalist>
+      
+          <div class="navgroup">
+                <button id="prevBtn" class="navbtn" title="Previous hour">◀</button>
+                <div id="hourLabel" class="hourlabel">—</div>
+                <button id="nextBtn" class="navbtn" title="Next hour">▶</button>
+                <button id="liveBtn" class="livebtn hidden">Jump to live</button>
+              </div>
             </div>
-          </div>
-    
-            <div class="navgroup timeset">
-          <div class="timeunit">
-            <button id="hrUp" class="navbtn spinbtn" title="Increase hour">▲</button>
-            <div class="timeval"><input id="hrInput" class="timeinput" type="number" min="0" max="23" value="0" /><span class="timelbl">HR</span></div>
-            <button id="hrDown" class="navbtn spinbtn" title="Decrease hour">▼</button>
-          </div>
-          <div class="timeunit">
-            <button id="minUp" class="navbtn spinbtn" title="Increase minute">▲</button>
-            <div class="timeval"><input id="minInput" class="timeinput" type="number" min="0" max="59" value="0" /><span class="timelbl">MIN</span></div>
-            <button id="minDown" class="navbtn spinbtn" title="Decrease minute">▼</button>
-          </div>
-          <div class="timeunit">
-            <button id="secUp" class="navbtn spinbtn" title="Increase second">▲</button>
-            <div class="timeval"><input id="secInput" class="timeinput" type="number" min="0" max="59" value="0" /><span class="timelbl">SEC</span></div>
-            <button id="secDown" class="navbtn spinbtn" title="Decrease second">▼</button>
-          </div>
-          <button id="applyTimeBtn" class="livebtn hidden" title="Jump grid start to this time">Set start</button>
-                            </div>
-                          </div>
-              
-                <div id="statsBar" class="statsbar">
-          <span class="stat up">GREEN <b id="statUp">0</b></span>
-          <span class="stat down">RED <b id="statDown">0</b></span>
-          <span class="stat nodata">DRAW <b id="statDraw">0</b></span>
-        </div>
-      </div>
-              
-                <div class="progresswrap hidden">
-      <span id="progressText">—</span>
-      <div class="progressbar"><i id="progressFill"></i></div>
-    </div>
-
-  <div id="banner" class="banner hidden"></div>
-
-  <div class="legend hidden">
-    <div class="item"><span class="swatch" style="background:var(--up)"></span> up second</div>
-    <div class="item"><span class="swatch" style="background:var(--down)"></span> down second</div>
-    <div class="item"><span class="swatch" style="background:var(--flat)"></span> flat</div>
-    <div class="item"><span class="swatch" style="background:var(--future)"></span> not reached yet</div>
-    <div class="item"><span class="swatch" style="background:var(--nodata)"></span> no data</div>
-    <div class="item"><span class="swatch" style="background:var(--accent)"></span> current second</div>
-  </div>
-
-  <section class="panel">
-    <div class="panel-head"><b>SECONDS</b></div>
-    <div class="grid-wrap"><div id="grid" class="grid"></div></div>
-  </section>
-
-  <div id="detail" class="detail hidden"></div>
+      
+              <div class="navgroup timeset">
+            <div class="timeunit">
+              <button id="hrUp" class="navbtn spinbtn" title="Increase hour">▲</button>
+              <div class="timeval"><input id="hrInput" class="timeinput" type="number" min="0" max="23" value="0" /><span class="timelbl">HR</span></div>
+              <button id="hrDown" class="navbtn spinbtn" title="Decrease hour">▼</button>
+            </div>
+            <div class="timeunit">
+              <button id="minUp" class="navbtn spinbtn" title="Increase minute">▲</button>
+              <div class="timeval"><input id="minInput" class="timeinput" type="number" min="0" max="59" value="0" /><span class="timelbl">MIN</span></div>
+              <button id="minDown" class="navbtn spinbtn" title="Decrease minute">▼</button>
+            </div>
+            <div class="timeunit">
+              <button id="secUp" class="navbtn spinbtn" title="Increase second">▲</button>
+              <div class="timeval"><input id="secInput" class="timeinput" type="number" min="0" max="59" value="0" /><span class="timelbl">SEC</span></div>
+              <button id="secDown" class="navbtn spinbtn" title="Decrease second">▼</button>
+            </div>
+            <button id="applyTimeBtn" class="livebtn hidden" title="Jump grid start to this time">Set start</button>
+                    </div>
+                  </div>
 
   <footer class="hidden">
     Hover a box for a quick read, click one to pin the details panel above. Each box is one second of the
