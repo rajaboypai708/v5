@@ -73,20 +73,20 @@
     }
   
     .controls{
-            display:flex; flex-wrap:wrap; align-items:center; gap:4px;
+            display:flex; flex-wrap:nowrap; align-items:center; gap:4px;
             margin-top:0; padding:3px 6px;
             background:var(--panel);
             border:1px solid var(--border);
             border-radius:6px;
             flex:0 0 auto;
             height:auto;
-            overflow:visible;
+            overflow-x:auto; overflow-y:hidden; scrollbar-width:none;
           }
+          .controls::-webkit-scrollbar{ display:none; }
           .controls .row1{
             display:flex; flex-wrap:nowrap; align-items:center; gap:4px;
-            width:100%; overflow-x:auto; overflow-y:hidden; scrollbar-width:none;
+            width:auto; overflow:visible; flex:0 0 auto;
           }
-          .controls .row1::-webkit-scrollbar{ display:none; }
   .dot{
       width:6px; height:6px; border-radius:50%;
       background:var(--muted); flex:0 0 auto;
@@ -110,7 +110,7 @@
     }
   .sym-input:focus{ outline:1px solid var(--accent); }
 
-  .navgroup{ display:flex; align-items:center; gap:4px; margin-left:auto; flex:0 0 auto; }
+  .navgroup{ display:flex; align-items:center; gap:4px; margin-left:8px; flex:0 0 auto; }
     button.navbtn{
       background:var(--panel-2); color:var(--text);
       border:1px solid var(--border); border-radius:5px;
@@ -133,11 +133,11 @@
   .hidden{ display:none !important; }
 
   .timeset{
-        gap:2px; flex:0 0 auto;
-        flex-basis:100%; width:100%;
-        justify-content:center; margin-left:0 !important;
-        margin-top:1px;
-      }
+          gap:2px; flex:0 0 auto;
+          width:auto;
+          justify-content:center; margin-left:4px !important;
+          margin-top:0;
+        }
       .timeunit{ display:flex; flex-direction:column; align-items:center; gap:0; }
       .timeval{ display:flex; flex-direction:column; align-items:center; }
       .timeinput{
