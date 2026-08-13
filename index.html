@@ -133,21 +133,21 @@
   .hidden{ display:none !important; }
 
   .timeset{
-      gap:3px; flex:0 0 auto;
-      flex-basis:100%; width:100%;
-      justify-content:center; margin-left:0 !important;
-      margin-top:2px;
-    }
-    .timeunit{ display:flex; flex-direction:column; align-items:center; gap:1px; }
-    .timeval{ display:flex; flex-direction:column; align-items:center; }
-    .timeinput{
-      width:32px; text-align:center; background:var(--panel-2); color:var(--text);
-      border:1px solid var(--border); border-radius:4px; padding:2px 1px;
-      font:inherit; font-size:10px; -moz-appearance:textfield;
-    }
-    .timeinput::-webkit-outer-spin-button, .timeinput::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
-    .timelbl{ font-size:6.5px; color:var(--muted); letter-spacing:0.5px; margin-top:0; }
-    button.spinbtn{ padding:1px 6px; font-size:8px; line-height:1; }
+        gap:2px; flex:0 0 auto;
+        flex-basis:100%; width:100%;
+        justify-content:center; margin-left:0 !important;
+        margin-top:1px;
+      }
+      .timeunit{ display:flex; flex-direction:column; align-items:center; gap:0; }
+      .timeval{ display:flex; flex-direction:column; align-items:center; }
+      .timeinput{
+        width:24px; text-align:center; background:var(--panel-2); color:var(--text);
+        border:1px solid var(--border); border-radius:3px; padding:0 1px;
+        font:inherit; font-size:8px; -moz-appearance:textfield; line-height:1.3;
+      }
+      .timeinput::-webkit-outer-spin-button, .timeinput::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+      .timelbl{ font-size:5.5px; color:var(--muted); letter-spacing:0.3px; margin-top:0; line-height:1; }
+      button.spinbtn{ padding:0 4px; font-size:6.5px; line-height:1.2; }
 
   .progresswrap{
     margin-top:10px; display:flex; align-items:center; gap:10px;
