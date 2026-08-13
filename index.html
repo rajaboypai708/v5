@@ -651,37 +651,24 @@
       document.getElementById('secInput').value=pad(d.getSeconds(),2);
     }
   function stepTime(unit, delta){
-      let hr=clampInt(document.getElementById('hrInput').value,0,23);
-      let min=clampInt(document.getElementById('minInput').value,0,59);
-      let sec=clampInt(document.getElementById('secInput').value,0,59);
-      let total=hr*3600+min*60+sec;
-      if(unit==='hr') total+=delta*3600;
-      else if(unit==='min') total+=delta*60;
-      else total+=delta;
-      total=((total%86400)+86400)%86400;
-      hr=Math.floor(total/3600);
-      min=Math.floor((total%3600)/60);
-      sec=total%60;
-      document.getElementById('hrInput').value=pad(hr,2);
-      document.getElementById('minInput').value=pad(min,2);
-      document.getElementById('secInput').value=pad(sec,2);
-      applyManualTime();
-    }
+        const base=new Date(state.viewHourStart);
+        if(unit==='hr') base.setHours(base.getHours()+delta);
+        else if(unit==='min') base.setMinutes(base.getMinutes()+delta);
+        else base.setSeconds(base.getSeconds()+delta);
+        setView(base.getTime());
+      }
   function applyManualTime(){
-      const hrEl=document.getElementById('hrInput');
-      const minEl=document.getElementById('minInput');
-      const secEl=document.getElementById('secInput');
-      const hr=clampInt(hrEl.value,0,23);
-      const min=clampInt(minEl.value,0,59);
-      const sec=clampInt(secEl.value,0,59);
-      hrEl.value=pad(hr,2); minEl.value=pad(min,2); secEl.value=pad(sec,2);
-      const base=new Date(state.viewHourStart);
-      base.setHours(hr,min,sec,0);
-      let targetStart=base.getTime();
-      const nowMs=Date.now();
-      if(targetStart>nowMs) targetStart-=86400000;
-      setView(targetStart);
-    }
+        const hrEl=document.getElementById('hrInput');
+        const minEl=document.getElementById('minInput');
+        const secEl=document.getElementById('secInput');
+        const hr=clampInt(hrEl.value,0,23);
+        const min=clampInt(minEl.value,0,59);
+        const sec=clampInt(secEl.value,0,59);
+        hrEl.value=pad(hr,2); minEl.value=pad(min,2); secEl.value=pad(sec,2);
+        const base=new Date(state.viewHourStart);
+        base.setHours(hr,min,sec,0);
+        setView(base.getTime());
+      }
 
   function setSymbol(raw){
     const sym=(raw||'').trim().toUpperCase();
