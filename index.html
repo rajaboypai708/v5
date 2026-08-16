@@ -379,14 +379,16 @@
   const SEC_PER_HOUR = 3600;
 
   const state = {
-    symbol: 'BTCUSDT',
-    liveHourStart: hourStart(Date.now()),
-    viewHourStart: 0,
-    isLive: true,
-    ws: null,
-    reconnectAttempts: 0,
-    lastCurSec: -1
-  };
+      symbol: 'BTCUSDT',
+      liveHourStart: hourStart(Date.now()),
+      viewHourStart: 0,
+      isLive: true,
+      ws: null,
+      reconnectAttempts: 0,
+      lastCurSec: -1,
+      viewBackfilled: false,
+      autoRoll: true
+    };
   state.viewHourStart = state.liveHourStart;
 
   const cache = new Map();       // hourStartMs -> Array(3600) of {o,c} | null
@@ -589,15 +591,17 @@
     }
   
     function rollLiveHour(newHs){
-      state.liveHourStart=newHs;
-      if(state.isLive){
-        state.viewHourStart=newHs;
-        updateHourLabel();
-        paintFromCache(newHs);
-        loadHistorical(newHs, Math.floor((Date.now()-newHs)/1000)+1);
-        updateNav();
-      }
-    }
+          state.liveHourStart=newHs;
+          if(state.isLive){
+            state.viewHourStart=newHs;
+            updateHourLabel();
+            paintFromCache(newHs);
+            loadHistorical(newHs, Math.floor((Date.now()-newHs)/1000)+1);
+            state.viewBackfilled=false;
+            state.autoRoll=true;
+            updateNav();
+          }
+        }
 
   // ---------- status / banner ----------
   function setStatus(kind){
@@ -624,14 +628,18 @@
   }
 
   function setView(hs){
-      state.viewHourStart=hs;
-      state.isLive = hs===state.liveHourStart;
-      updateHourLabel();
-      paintFromCache(hs);
-      const upto = isViewLive(hs) ? Math.floor((Date.now()-hs)/1000)+1 : SEC_PER_HOUR;
-      loadHistorical(hs, upto);
-      updateNav();
-    }
+        state.viewHourStart=hs;
+        state.isLive = hs===state.liveHourStart;
+        updateHourLabel();
+        paintFromCache(hs);
+        const nowMs=Date.now();
+        const windowEnded = nowMs>=hs+SEC_PER_HOUR*1000;
+        const upto = windowEnded ? SEC_PER_HOUR : (isViewLive(hs) ? Math.floor((nowMs-hs)/1000)+1 : 0);
+        state.viewBackfilled = windowEnded;
+        state.autoRoll = !windowEnded;
+        if(upto>0) loadHistorical(hs, upto);
+        updateNav();
+      }
   function prevHour(){ setView(state.viewHourStart-3600000); }
   function nextHour(){ const t=state.viewHourStart+3600000; if(t<=state.liveHourStart) setView(t); }
   function jumpToLive(){ setView(state.liveHourStart); }
@@ -773,21 +781,41 @@
 
   // ---------- ticking clock ----------
   setInterval(()=>{
-      const nowMs=Date.now();
-      const nowCanonical=hourStart(nowMs);
-      if(nowCanonical!==state.liveHourStart) rollLiveHour(nowCanonical);
-      if(isViewLive(state.viewHourStart)){
-        const curSec=Math.min(SEC_PER_HOUR-1, Math.floor((nowMs-state.viewHourStart)/1000));
-        for(let i=Math.max(0,state.lastCurSec); i<=curSec; i++){
-          const cell=cells[i];
-          if(cell && cell.classList.contains('future')) setCellClass(cell,'nodata',null);
+        const nowMs=Date.now();
+        const nowCanonical=hourStart(nowMs);
+        if(nowCanonical!==state.liveHourStart) rollLiveHour(nowCanonical);
+        let windowEnded = nowMs>=state.viewHourStart+SEC_PER_HOUR*1000;
+        if(windowEnded && state.autoRoll){
+          if(!state.viewBackfilled){
+            state.viewBackfilled=true;
+            loadHistorical(state.viewHourStart, SEC_PER_HOUR);
+          }
+          while(nowMs>=state.viewHourStart+SEC_PER_HOUR*1000){
+            state.viewHourStart += SEC_PER_HOUR*1000;
+          }
+          state.isLive = state.viewHourStart===state.liveHourStart;
+          state.viewBackfilled=false;
+          updateHourLabel();
+          paintFromCache(state.viewHourStart);
+          loadHistorical(state.viewHourStart, Math.floor((nowMs-state.viewHourStart)/1000)+1);
+          updateNav();
+          windowEnded=false;
+        } else if(windowEnded && !state.viewBackfilled){
+          state.viewBackfilled=true;
+          loadHistorical(state.viewHourStart, SEC_PER_HOUR);
         }
-        state.lastCurSec=curSec;
-        updateProgress(curSec);
-        updateStats();
-        updateNav();
-      }
-    },1000);
+        if(isViewLive(state.viewHourStart)){
+          const curSec=Math.min(SEC_PER_HOUR-1, Math.floor((nowMs-state.viewHourStart)/1000));
+          for(let i=Math.max(0,state.lastCurSec); i<=curSec; i++){
+            const cell=cells[i];
+            if(cell && cell.classList.contains('future')) setCellClass(cell,'nodata',null);
+          }
+          state.lastCurSec=curSec;
+          updateProgress(curSec);
+          updateStats();
+          updateNav();
+        }
+      },1000);
 
   // ---------- viewport auto-fit ----------
         function fitGridsToViewport(){
