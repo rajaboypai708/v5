@@ -364,7 +364,7 @@
   <footer class="hidden">
     Hover a box for a quick read, click one to pin the details panel above. Each box is one second of the
     selected hour; only a full hour (3,600 seconds) is ever shown, never more or less.
-    Data source: Binance <code>&lt;symbol&gt;@kline_1s</code> WebSocket for the live hour, and
+    Data source: Binance <code>&lt;symbol&gt;@trade</code> WebSocket for the live hour, and
     <code>/api/v3/klines</code> (interval=1s) for hours you navigate back to.
   </footer>
 
@@ -379,16 +379,19 @@
   const SEC_PER_HOUR = 3600;
 
   const state = {
-      symbol: 'BTCUSDT',
-      liveHourStart: hourStart(Date.now()),
-      viewHourStart: 0,
-      isLive: true,
-      ws: null,
-      reconnectAttempts: 0,
-      lastCurSec: -1,
-      viewBackfilled: false,
-      autoRoll: true
-    };
+        symbol: 'BTCUSDT',
+        liveHourStart: hourStart(Date.now()),
+        viewHourStart: 0,
+        isLive: true,
+        ws: null,
+        reconnectAttempts: 0,
+        lastCurSec: -1,
+        viewBackfilled: false,
+        autoRoll: true,
+        tickSecStart: null,
+        tickOpen: null,
+        tickClose: null
+      };
   state.viewHourStart = state.liveHourStart;
 
   const cache = new Map();       // hourStartMs -> Array(3600) of {o,c} | null
@@ -551,7 +554,7 @@
     if(state.ws){ try{ state.ws.onclose=null; state.ws.close(); }catch(e){} }
     setStatus('connecting');
     let opened=false;
-    const url = `wss://stream.binance.com:9443/ws/${state.symbol.toLowerCase()}@kline_1s`;
+    const url = `wss://stream.binance.com:9443/ws/${state.symbol.toLowerCase()}@trade`;
     let ws;
     try{ ws=new WebSocket(url); } catch(e){ showBanner('Could not open a WebSocket connection to Binance from this environment. Download this file and open it directly in your browser.'); setStatus('offline'); return; }
     state.ws=ws;
@@ -561,13 +564,22 @@
 
     ws.onopen=()=>{ opened=true; clearTimeout(failTimer); state.reconnectAttempts=0; setStatus('live'); hideBanner(); };
     ws.onmessage=(ev)=>{
-      try{
-        const msg=JSON.parse(ev.data);
-        const k=msg.k;
-        if(!k) return;
-        handleCandle(k.t, parseFloat(k.o), parseFloat(k.c));
-      }catch(e){ /* ignore malformed frame */ }
-    };
+          try{
+            const msg=JSON.parse(ev.data);
+            if(msg.e!=='trade') return;
+            const T=msg.T;
+            const price=parseFloat(msg.p);
+            const secStart=Math.floor(T/1000)*1000;
+            if(state.tickSecStart!==secStart){
+              state.tickSecStart=secStart;
+              state.tickOpen=price;
+              state.tickClose=price;
+            } else {
+              state.tickClose=price;
+            }
+            handleCandle(state.tickSecStart, state.tickOpen, state.tickClose);
+          }catch(e){ /* ignore malformed frame */ }
+        };
     ws.onerror=()=>{ setStatus('error'); };
     ws.onclose=()=>{
       setStatus('offline');
@@ -679,16 +691,19 @@
       }
 
   function setSymbol(raw){
-    const sym=(raw||'').trim().toUpperCase();
-    if(!sym || sym===state.symbol) return;
-    state.symbol=sym;
-    cache.clear();
-    loadingHours.clear();
-    state.liveHourStart=hourStart(Date.now());
-    state.isLive=true;
-    connectWS();
-    setView(state.liveHourStart);
-  }
+      const sym=(raw||'').trim().toUpperCase();
+      if(!sym || sym===state.symbol) return;
+      state.symbol=sym;
+      cache.clear();
+      loadingHours.clear();
+      state.liveHourStart=hourStart(Date.now());
+      state.isLive=true;
+      state.tickSecStart=null;
+      state.tickOpen=null;
+      state.tickClose=null;
+      connectWS();
+      setView(state.liveHourStart);
+    }
 
   // ---------- tooltip & detail ----------
   const tooltip=document.getElementById('tooltip');
