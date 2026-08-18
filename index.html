@@ -955,5 +955,14 @@
   
   })();
 </script>
+  <script src="tick-loader.js"></script>
+<script>
+  (async () => {
+    const loader = new TickDataLoader('2026-08-18', '.'); // '.' = same folder as index.html
+    const boundary = await loader.load();
+    console.log('history filled up to second', boundary);
+    window.tickLoader = loader; // so you can poke it from browser console too
+  })();
+</script>
 </body>
 </html>
