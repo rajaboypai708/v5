@@ -970,8 +970,18 @@ class TickDataLoader {
       fetch(`${this.baseUrl}/opens-${this.dateStr}.bin`).then(r => r.arrayBuffer()),
       fetch(`${this.baseUrl}/closes-${this.dateStr}.bin`).then(r => r.arrayBuffer()),
     ]);
-    this.opens = new Float64Array(opensBuf);
-    this.closes = new Float64Array(closesBuf);
+    const trim = (buf) => {
+      const usable = buf.byteLength - (buf.byteLength % 8);
+      if (usable !== buf.byteLength) {
+        console.warn(`bin file byte length ${buf.byteLength} is not a multiple of 8 — truncating trailing ${buf.byteLength - usable} byte(s). This file was likely written incorrectly upstream.`);
+      }
+      return buf.slice(0, usable);
+    };
+    this.opens = new Float64Array(trim(opensBuf));
+    this.closes = new Float64Array(trim(closesBuf));
+    if (this.opens.length !== this.closes.length) {
+      console.warn(`opens length (${this.opens.length}) and closes length (${this.closes.length}) differ — the two .bin files may be out of sync.`);
+    }
     this.filledBoundary = this._findFilledBoundary();
     return this.filledBoundary;
   }
